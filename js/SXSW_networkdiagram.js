@@ -18,24 +18,33 @@ function initViz() {
 
 // Takes an array
 function convertToJSON(input){
-    var output = [];
+    var columns = input.getColumns();
+    var fieldNames = ["explicit", "imageUrl", "key", "name", "albumName", "artistName", "trackUrl", "acousticness",
+                      "danceability", "duration", "energy", "instrumentalness", "liveness", "loudness", "popularity",
+                      "speechiness", "tempo", "timeSignature", "valence"];
+    var tracksMap = {};
 
-    for(i=0; i<input.length; i++) {
-        var item = {};
-        item.artist = input[i][0].value;
-        item.title = input[i][6].value;
-        item.itunes = input[i][3].value;
-        item.cover = input[i][2].value;
-        item.color = input[i][1].value;
-        item.text = input[i][5].value;
-
-        // We need to break musicians apart
-        item.musicians = input[i][4].value.split("|");
-
-        output.push(item);
+    for(rowIndex=0; rowIndex<input.length; rowIndex++) {
+        if (tracksMap[track.name] != null) {
+            tracksMap[track.name].artistName.push(input[rowIndex][fieldNames.indexOf("artistName")]);
+            continue;
+        }
+        var track = {};
+        columns.forEach(function(column) {
+            if (column.getIndex() == fieldNames.indexOf("artistName")) {
+                track[fieldNames[column.getIndex()]] = [input[rowIndex][column.getIndex()]];
+            } else {
+                track[fieldNames[column.getIndex()]] = input[rowIndex][column.getIndex()];
+            }
+        });
+        tracksMap[track.name] = track;
     }
 
-    return output;
+    var tracks = [];
+    for (var trackName in tracksMap) {
+        tracks.push(tracksMap[trackname]);
+    }
+    return tracks;
 }
 
 function getUnderlyingData(){
@@ -45,7 +54,7 @@ function getUnderlyingData(){
     options["ignoreAliases"] = false;
     options["ignoreSelection"] = true;
     options["getJSON"] = false;
-    options["includeAllColumns"] = true;
+    options["includeAllColumns"] = false;
     sheet.getUnderlyingDataAsync(options).then(function(t){
             table = t;
             renderNetwork(convertToJSON(table.getData()));
@@ -169,13 +178,9 @@ function renderNetwork(jsonData) {
             var node = {};
 
             // We retain some of the album's properties.
-
-            node.title    = entry.title;
-            node.subtitle = entry.artist;
-            node.image    = entry.cover;
-            node.url      = entry.itunes;
-            node.color    = entry.color;
-            node.text     = entry.text;
+            for (var fieldName in entry) {
+                node[fieldName] = entry[fieldName];
+            }
 
             // We'll also copy the musicians, again using
             // a more neutral property. At the risk of
