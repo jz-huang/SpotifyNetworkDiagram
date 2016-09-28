@@ -1,5 +1,16 @@
 var viz, sheet, table, api_options;
 
+function PlaySound(soundobj) {
+    var thissound=document.getElementById(soundobj);
+    thissound.play();
+}
+
+function StopSound(soundobj) {
+    var thissound=document.getElementById(soundobj);
+    thissound.pause();
+    thissound.currentTime = 0;
+}
+
 function initViz() {
     var containerDiv = document.getElementById("vizContainer"),
         url = "http://localhost/views/spotify_getData/Sheet1?:embed=y&:showShareOptions=true&:display_count=no&:showVizHome=no",
@@ -17,24 +28,28 @@ function initViz() {
 }
 
 // Takes an array
-function convertToJSON(input){
-    var columns = input.getColumns();
-    var fieldNames = ["explicit", "imageUrl", "key", "name", "albumName", "artistName", "trackUrl", "acousticness",
+function convertToJSON(dataTable){
+    var columns = dataTable.getColumns();
+    var input = dataTable.getData().slice(0,25);
+
+    var fieldNames = ["explicit", "imageUrl", "imageIndex", "key", "name", "albumName", "artistName", "trackUrl", "acousticness",
                       "danceability", "duration", "energy", "instrumentalness", "liveness", "loudness", "popularity",
                       "speechiness", "tempo", "timeSignature", "valence"];
     var tracksMap = {};
 
-    for(rowIndex=0; rowIndex<input.length; rowIndex++) {
-        if (tracksMap[track.name] != null) {
-            tracksMap[track.name].artistName.push(input[rowIndex][fieldNames.indexOf("artistName")]);
+    for(rowIndex = 0; rowIndex < input.length; rowIndex++) {
+        var name = input[rowIndex][fieldNames.indexOf("name")].value;
+        if (tracksMap[name] !== undefined) {
+            tracksMap[name].artistName.push(input[rowIndex][fieldNames.indexOf("artistName")].value);
             continue;
         }
-        var track = {};
+        track = {};
         columns.forEach(function(column) {
-            if (column.getIndex() == fieldNames.indexOf("artistName")) {
-                track[fieldNames[column.getIndex()]] = [input[rowIndex][column.getIndex()]];
+            if (column.getIndex() === fieldNames.indexOf("artistName")) {
+
+                track[fieldNames[column.getIndex()]] = [input[rowIndex][column.getIndex()].value];
             } else {
-                track[fieldNames[column.getIndex()]] = input[rowIndex][column.getIndex()];
+                track[fieldNames[column.getIndex()]] = input[rowIndex][column.getIndex()].value;
             }
         });
         tracksMap[track.name] = track;
@@ -42,7 +57,7 @@ function convertToJSON(input){
 
     var tracks = [];
     for (var trackName in tracksMap) {
-        tracks.push(tracksMap[trackname]);
+        tracks.push(tracksMap[trackName]);
     }
     return tracks;
 }
@@ -57,7 +72,7 @@ function getUnderlyingData(){
     options["includeAllColumns"] = false;
     sheet.getUnderlyingDataAsync(options).then(function(t){
             table = t;
-            renderNetwork(convertToJSON(table.getData()));
+            renderNetwork(convertToJSON(table));
     });
 }
 
@@ -66,8 +81,8 @@ function renderNetwork(jsonData) {
     // a size that's convenient for displaying the graphic on
     // http://bl.ocks.org
 
-    var width = 800,
-        height = 500;
+    var width = 1000,
+        height = 800;
 
     // Visual properties of the graph are next. We need to make
     // those that are going to be animated accessible to the
@@ -181,6 +196,7 @@ function renderNetwork(jsonData) {
             for (var fieldName in entry) {
                 node[fieldName] = entry[fieldName];
             }
+            node.color = '#'+(Math.random()*0xFFFFFF<<0).toString(16);
 
             // We'll also copy the musicians, again using
             // a more neutral property. At the risk of
@@ -192,7 +208,7 @@ function renderNetwork(jsonData) {
             // (This may be confusing because D3 refers to
             // the latter as "links."
 
-            node.links = entry.musicians.slice(0);
+            node.links = entry.danceability;
 
             // As long as we're iterating through the nodes
             // array, take the opportunity to create an
@@ -220,6 +236,7 @@ function renderNetwork(jsonData) {
         // minded.
 
         var links = [];
+        var danceability_delta = 0.05;
 
         // Start by iterating through the albums.
 
@@ -227,6 +244,19 @@ function renderNetwork(jsonData) {
 
             // For each album, iterate through the musicians.
 
+            for (var tgtIdx = srcIdx +1; tgtIdx < srcList.length; tgtIdx++) {
+                var tgtNode = srcList[tgtIdx];
+                var targetValue = parseFloat(tgtNode.danceability);
+                var srcValue = parseFloat(srcNode.danceability);
+                if (Math.abs(targetValue-srcValue) < danceability_delta) {
+                    links.push({
+                        source: srcIdx,
+                        target: tgtIdx,
+                        link: "danceabilities: " + srcNode.danceability + "," + tgtNode.danceability
+                    })
+                }
+            }
+            /*
             srcNode.musicians.forEach(function(srcLink) {
 
                 // For each musican in the "src" album, iterate
@@ -260,7 +290,7 @@ function renderNetwork(jsonData) {
                         });
                     }
                 }
-            });
+            }); */
         });
 
         // Now create the edges for our graph. We do that by
@@ -457,7 +487,7 @@ function renderNetwork(jsonData) {
 
         labelSelection.append('text')
             .text(function(d, i) {
-                return i % 2 == 0 ? '' : d.node.title;
+                return i % 2 == 0 ? '' : d.node.name;
             })
             .attr('data-node-index', function(d, i){
                 return i % 2 == 0 ? 'none' : Math.floor(i/2);
@@ -613,21 +643,23 @@ function renderNetwork(jsonData) {
 
                 // Now add the notes content.
 
-                notes.append('h1').text(node.title);
-                notes.append('h2').text(node.subtitle);
-                if (node.url && node.image) {
+                notes.append('h1').text(node.name);
+                notes.append('h2').text("Album: " + node.albumName);
+                if (node.imageUrl) {
                     notes.append('div')
                         .classed('artwork',true)
                         .append('a')
-                        .attr('href', node.url)
                         .append('img')
-                            .attr('src', node.image);
+                            .attr('src', node.imageUrl)
+                            .attr('style', "width:256px;height:256px;")
                 }
-                var list = notes.append('ul');
-                node.links.forEach(function(link){
+                notes.append('br');
+
+                var list = notes.append('ul').text("Artists: ");
+                node.artistName.forEach(function(link){
                     list.append('li')
                         .text(link);
-                })
+                })*
 
                 // With the content in place, transition
                 // the opacity to make it visible.
