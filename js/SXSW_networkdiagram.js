@@ -1,19 +1,48 @@
 var viz, sheet, table, api_options;
-
-function PlaySound(soundobj) {
-    var thissound=document.getElementById(soundobj);
-    thissound.play();
+var danceability_delta = 0.02; //if the dancebility difference between two tracks is less than delta, then form a link
+var previouslyCheckedExplicit;
+var previousExplicitCheckResult;
+var currentLinkField = "danceability";
+var currentDelta = 0.14;
+var currentData;
+function PlaySoundWithExplicitCheck(explicit) {
+    if (explicit === 'false') {
+        PlaySound();
+    } else if (previouslyCheckedExplicit === false) {
+        $('#myModal').modal('show');
+    } else if (previousExplicitCheckResult === true) {
+        PlaySound();
+    }
 }
 
-function StopSound(soundobj) {
-    var thissound=document.getElementById(soundobj);
+function setExplicitCheckResultToTrue() {
+    previouslyCheckedExplicit = true;
+    previousExplicitCheckResult = true;
+    $('#myModal').modal('hide');
+}
+
+function setExplicitCheckResulToFalse() {
+    previouslyCheckedExplicit = true;
+    previousExplicitCheckResult = false;
+    $('#myModal').modal('hide');
+}
+
+function PlaySound() {
+    previousExplicitCheck = true;
+    var thissound=document.getElementById("audioPreview");
+    thissound.play();
+
+}
+
+function StopSound() {
+    var thissound=document.getElementById("audioPreview");
     thissound.pause();
     thissound.currentTime = 0;
 }
 
 function initViz() {
     var containerDiv = document.getElementById("vizContainer"),
-        url = "http://localhost/views/spotify_getData/Sheet1?:embed=y&:showShareOptions=true&:display_count=no&:showVizHome=no",
+        url = "http://10.32.134.4/views/SXSWJoin/Sheet2?:embed=y&:showShareOptions=true&:display_count=no&:showVizHome=no",
         options = {
             hideTabs: true,
             hideToolbar: true,
@@ -24,17 +53,20 @@ function initViz() {
         };
 
     viz = new tableau.Viz(containerDiv, url, options);
+    viz.addEventListener(tableau.TableauEventName.MARKS_SELECTION, handleSelectionEvent)
+    viz.addEventListener(tableau.TableauEventName.FILTER_CHANGE, handleFilterEvent);
     // Create a viz object and embed it in the container div.
 }
 
 // Takes an array
 function convertToJSON(dataTable){
     var columns = dataTable.getColumns();
-    var input = dataTable.getData().slice(0,25);
+    var input = dataTable.getData();
+    console.log(input.length)
 
-    var fieldNames = ["explicit", "imageUrl", "imageIndex", "key", "name", "albumName", "artistName", "trackUrl", "acousticness",
-                      "danceability", "duration", "energy", "instrumentalness", "liveness", "loudness", "popularity",
-                      "speechiness", "tempo", "timeSignature", "valence"];
+    var fieldNames = ["albumName", "artistName", "explicit", "imageUrl", "imageIndex", "previewUrl", "name", "danceability", "energy",
+                      "instrumentalness", "key", "liveness", "mode","loudness", "numRecords", "Popularity", "Speechiness", "Tempo",
+                      "timeSignature", "valence"]
     var tracksMap = {};
 
     for(rowIndex = 0; rowIndex < input.length; rowIndex++) {
@@ -59,8 +91,11 @@ function convertToJSON(dataTable){
     for (var trackName in tracksMap) {
         tracks.push(tracksMap[trackName]);
     }
+    currentData = tracks;
+    //calculateDeltas(tracks);
     return tracks;
 }
+
 
 function getUnderlyingData(){
     sheet = viz.getWorkbook().getActiveSheet();
@@ -72,11 +107,41 @@ function getUnderlyingData(){
     options["includeAllColumns"] = false;
     sheet.getUnderlyingDataAsync(options).then(function(t){
             table = t;
-            renderNetwork(convertToJSON(table));
+            renderNetwork(convertToJSON(table), currentLinkField, currentDelta);
     });
 }
 
-function renderNetwork(jsonData) {
+function handleSelectionEvent(selectionEvent) {
+    selectionEvent.getMarksAsync().then(function(marks) {
+        var fieldName = marks.getPairs()[0].fieldName;
+    })
+}
+
+function handleFilterEvent(filterEvent) {
+    sheet = viz.getWorkbook().getActiveSheet();
+    options = {};
+    options["maxRows"] = 0;
+    options["ignoreAliases"] = false;
+    options["ignoreSelection"] = true;
+    options["getJSON"] = false;
+    options["includeAllColumns"] = false;
+    sheet.getUnderlyingDataAsync(options).then(function(t){
+        table = t;
+        updateNetWorkData(table, currentLinkField, currentDelta);
+    });
+}
+
+function updateNetWork(linkField, linkDelta) {
+    updateNetWorkData(currentData, linkField, linkDelta);
+}
+
+function updateNetWorkData(table, linkField, linkDelta) {
+    $('#graph').empty();
+    $('#notes').empty();
+    renderNetwork(convertToJSON(table), linkField, linkDelta);
+}
+
+function renderNetwork(jsonData, linkField, linkDelta) {
     // Define the dimensions of the visualization. We're using
     // a size that's convenient for displaying the graphic on
     // http://bl.ocks.org
@@ -208,7 +273,7 @@ function renderNetwork(jsonData) {
             // (This may be confusing because D3 refers to
             // the latter as "links."
 
-            node.links = entry.danceability;
+            node.links = entry[linkField];
 
             // As long as we're iterating through the nodes
             // array, take the opportunity to create an
@@ -236,7 +301,6 @@ function renderNetwork(jsonData) {
         // minded.
 
         var links = [];
-        var danceability_delta = 0.05;
 
         // Start by iterating through the albums.
 
@@ -248,49 +312,14 @@ function renderNetwork(jsonData) {
                 var tgtNode = srcList[tgtIdx];
                 var targetValue = parseFloat(tgtNode.danceability);
                 var srcValue = parseFloat(srcNode.danceability);
-                if (Math.abs(targetValue-srcValue) < danceability_delta) {
+                if (Math.abs(targetValue-srcValue) < linkDelta) {
                     links.push({
                         source: srcIdx,
                         target: tgtIdx,
-                        link: "danceabilities: " + srcNode.danceability + "," + tgtNode.danceability
+                        link: linkField + ": " + srcNode[linkField] + "," + tgtNode[linkField]
                     })
                 }
             }
-            /*
-            srcNode.musicians.forEach(function(srcLink) {
-
-                // For each musican in the "src" album, iterate
-                // through the remaining albums in the list.
-
-                for (var tgtIdx = srcIdx + 1;
-                        tgtIdx < srcList.length;
-                        tgtIdx++) {
-
-                    // Use a variable to refer to the "tgt"
-                    // album for convenience.
-
-                    var tgtNode = srcList[tgtIdx];
-
-                    // Is there any musician in the "tgt"
-                    // album that matches the musican we're
-                    // currently considering from the "src"
-                    // album?
-
-                    if (tgtNode.musicians.some(function(tgtLink){
-                        return tgtLink === srcLink;
-                    })) {
-
-                        // When we do find a match, add a new
-                        // link to the links array.
-
-                        links.push({
-                            source: srcIdx,
-                            target: tgtIdx,
-                            link: srcLink
-                        });
-                    }
-                }
-            }); */
         });
 
         // Now create the edges for our graph. We do that by
@@ -629,6 +658,9 @@ function renderNetwork(jsonData) {
 
                 fillColor = node.text;
 
+                previouslyCheckedExplicit = false;
+                previousExplicitCheckResult = false;
+
                 // Delete the current notes section to prepare
                 // for new information.
 
@@ -642,16 +674,24 @@ function renderNetwork(jsonData) {
                 notes.style({'opacity': 0});
 
                 // Now add the notes content.
+                notes.append('audio')
+                        .attr('id', 'audioPreview')
+                        .attr('src', node.previewUrl);
 
                 notes.append('h1').text(node.name);
                 notes.append('h2').text("Album: " + node.albumName);
                 if (node.imageUrl) {
                     notes.append('div')
+                        .on('mouseover', function() {
+                            PlaySoundWithExplicitCheck(node.explicit);
+                        })
+                        .on('mouseout', StopSound)
                         .classed('artwork',true)
                         .append('a')
                         .append('img')
                             .attr('src', node.imageUrl)
                             .attr('style', "width:256px;height:256px;")
+
                 }
                 notes.append('br');
 
@@ -659,7 +699,7 @@ function renderNetwork(jsonData) {
                 node.artistName.forEach(function(link){
                     list.append('li')
                         .text(link);
-                })*
+                });
 
                 // With the content in place, transition
                 // the opacity to make it visible.

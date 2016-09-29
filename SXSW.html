@@ -110,6 +110,13 @@
             ul.connection.hidden {
                 display: none;
             }
+            #submit {
+                float:left;
+                clear:both;
+                position:relative;
+                left:350px;
+            }
+
 
         </style>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
@@ -130,7 +137,6 @@
         </div>
         <div id="vizContainer" style="width:1000px; height:600px;"></div>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-        <script src="js/bootstrap.min.js"></script>
         <script src='http://d3js.org/d3.v3.min.js'></script>
         <!-- Latest compiled and minified CSS -->
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -140,33 +146,40 @@
 
         <!-- Latest compiled and minified JavaScript -->
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+        <div class="col-xs-2" id="linkProperty">
+          <label for="ex1">Link On Property</label>
+          <input class="form-control" id="ex1" type="text">
+        </div>
+
+        <div class="col-xs-2" id="linkDelta">
+          <label for="ex1">Maximum Difference For Forming Link</label>
+          <input class="form-control" id="ex1" type="text">
+        </div>
+
+        <br>
+        <button type="button" id="submit" class="btn btn-primary" onclick="updateNetWork()">Update Network Diagram!</button>
+
         <div id='container'>
             <div id='graph'></div>
             <div id='notes'></div>
         </div>
 
-        <!-- Button trigger modal -->
-        <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#myModal">
-          Launch demo modal
-        </button>
         <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
           <div class="modal-dialog" role="document">
             <div class="modal-content">
               <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel">Modal title</h4>
+                <h4 class="modal-title" id="myModalLabel">Explicit Content Detected!</h4>
               </div>
               <div class="modal-body">
-                ...
+                This song contains explicit content, you sure you want to proceed to playing?
               </div>
               <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Save changes</button>
+                <button type="button" class="btn btn-default" onclick="setExplicitCheckResultToFalse()">No, don't play!</button>
+                <button type="button" class="btn btn-primary" onclick="setExplicitCheckResultToTrue()">Keep playing!</button>
               </div>
             </div>
           </div>
         </div>
-        <p onmouseover="PlaySound('mySound')" onmouseout="StopSound('mySound')">Hover Over Me To Play</p>
-        <audio id='mySound' src='http://d318706lgtcm8e.cloudfront.net/mp3-preview/f454c8224828e21fa146af84916fd22cb89cedc6'/>
     </body>
 </html>
