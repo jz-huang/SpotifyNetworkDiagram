@@ -116,6 +116,9 @@
                 position:relative;
                 left:350px;
             }
+            #properties-dropdown {
+                width: 200px;
+            }
 
 
         </style>
@@ -159,7 +162,14 @@
 
         <br>
         <button type="button" id="submit" class="btn btn-primary" onclick="updateNetWork()">Update Network Diagram!</button>
-
+        <label for="email"> Select Property </label>
+        <select class="form-control" id="properties-dropdown" type="properties-dropdown">
+            <option value="one">One</option>
+            <option value="two">Two</option>
+            <option value="three">Three</option>
+            <option value="four">Four</option>
+            <option value="five">Five</option>
+        </select>
         <div id='container'>
             <div id='graph'></div>
             <div id='notes'></div>

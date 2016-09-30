@@ -1,3 +1,7 @@
+$(document).ready(function() {
+    $()
+})
+
 var viz, sheet, table, api_options;
 var danceability_delta = 0.02; //if the dancebility difference between two tracks is less than delta, then form a link
 var previouslyCheckedExplicit;
@@ -46,6 +50,7 @@ function initViz() {
         options = {
             hideTabs: true,
             hideToolbar: true,
+            allowFullScreen: false,
             onFirstInteractive: function () {
                 // enable our button once the viz is ready
                 $('#generateNetwork').removeAttr("disabled");
