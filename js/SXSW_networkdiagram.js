@@ -3,7 +3,7 @@ var danceability_delta = 0.02; //if the dancebility difference between two track
 var previouslyCheckedExplicit;
 var previousExplicitCheckResult;
 var currentLinkField = "danceability";
-var currentDelta = 0.14;
+var currentDelta = 0.05;
 var currentData;
 function PlaySoundWithExplicitCheck(explicit) {
     if (explicit === 'false') {
@@ -42,13 +42,17 @@ function StopSound() {
 
 function initViz() {
     var containerDiv = document.getElementById("vizContainer"),
-        url = "http://10.32.134.4/views/SXSWJoin/Sheet2?:embed=y&:showShareOptions=true&:display_count=no&:showVizHome=no",
+        url = "http://10.32.134.4/views/SXSWJoin_old/Sheet2?:embed=y&:showShareOptions=true&:display_count=no&:showVizHome=no",
         options = {
             hideTabs: true,
             hideToolbar: true,
             onFirstInteractive: function () {
                 // enable our button once the viz is ready
                 $('#generateNetwork').removeAttr("disabled");
+                var worksheet = viz.getWorkbook().getActiveSheet();
+                worksheet.highlightMarksByPatternMatchAsync("Track Name", "Wild").then(function(){
+                    worksheet.clearHighlightedMarksAsync();
+                });
             }
         };
 
@@ -113,7 +117,12 @@ function getUnderlyingData(){
 
 function handleSelectionEvent(selectionEvent) {
     selectionEvent.getMarksAsync().then(function(marks) {
-        var fieldName = marks.getPairs()[0].fieldName;
+        var pairs = marks[0].getPairs();
+        pairs.forEach(function(pair) {
+            if (pair.fieldName === "Track Name") {
+                clickNode(pair.value);
+            }
+        });
     })
 }
 
@@ -141,13 +150,28 @@ function updateNetWorkData(table, linkField, linkDelta) {
     renderNetwork(convertToJSON(table), linkField, linkDelta);
 }
 
+var nodeSelection;
+var edgeSelection;
+var labelSelection;
+var labelLinkSelection;
+var connectionSelection;
+
+function clickNode(trackName) {
+    var selectedNode = nodeSelection.each(function(node) {
+        if (node.name === trackName) {
+            nodeSelection.on('click')(node);
+            return;
+        }
+    });
+}
+
 function renderNetwork(jsonData, linkField, linkDelta) {
     // Define the dimensions of the visualization. We're using
     // a size that's convenient for displaying the graphic on
     // http://bl.ocks.org
 
-    var width = 1000,
-        height = 800;
+    var width = 800,
+        height = 600;
 
     // Visual properties of the graph are next. We need to make
     // those that are going to be animated accessible to the
@@ -382,7 +406,7 @@ function renderNetwork(jsonData, linkField, linkDelta) {
         // We add these first so they'll appear "underneath"
         // the nodes.
 
-        var edgeSelection = svg.selectAll('.edge')
+        edgeSelection = svg.selectAll('.edge')
             .data(edges)
             .enter()
             .append('line')
@@ -392,7 +416,7 @@ function renderNetwork(jsonData, linkField, linkDelta) {
 
         // Next up are the nodes.
 
-        var nodeSelection = svg.selectAll('.node')
+        nodeSelection = svg.selectAll('.node')
             .data(nodes)
             .enter()
             .append('g')
@@ -498,13 +522,13 @@ function renderNetwork(jsonData, linkField, linkDelta) {
         // we do need a selection so we can run the
         // force layout.
 
-        var labelLinkSelection = svg.selectAll('line.labelLink')
+        labelLinkSelection = svg.selectAll('line.labelLink')
             .data(labelLinks);
 
         // The label pseud-nodes themselves are just
         // `<g>` containers.
 
-        var labelSelection = svg.selectAll('g.labelNode')
+        labelSelection = svg.selectAll('g.labelNode')
             .data(labels)
             .enter()
             .append('g')
@@ -525,7 +549,7 @@ function renderNetwork(jsonData, linkField, linkDelta) {
         // The last bit of markup are the lists of
         // connections for each link.
 
-        var connectionSelection = graph.selectAll('ul.connection')
+        connectionSelection = graph.selectAll('ul.connection')
             .data(edges)
             .enter()
             .append('ul')
@@ -570,12 +594,16 @@ function renderNetwork(jsonData, linkField, linkDelta) {
 
             // Ignore events based on dragging.
 
-            if (d3.event.defaultPrevented) return;
+            if (d3.event !== null && d3.event.defaultPrevented) return;
 
             // Remember whether or not the clicked
             // node is currently selected.
 
             var selected = node.selected;
+
+            if (selected && d3.event === null) {
+                return;
+            }
 
             // Keep track of the desired text color.
 
@@ -603,7 +631,7 @@ function renderNetwork(jsonData, linkField, linkDelta) {
                 .style('opacity', 0);
 
             // Now see if the node wasn't previously selected.
-
+            var worksheet = viz.getWorkbook().getActiveSheet();
             if (!selected) {
 
                 // This node wasn't selected before, so
@@ -690,7 +718,7 @@ function renderNetwork(jsonData, linkField, linkDelta) {
                         .append('a')
                         .append('img')
                             .attr('src', node.imageUrl)
-                            .attr('style', "width:256px;height:256px;")
+                            .attr('style', "width:200px;height:200px;")
 
                 }
                 notes.append('br');
@@ -705,7 +733,14 @@ function renderNetwork(jsonData, linkField, linkDelta) {
                 // the opacity to make it visible.
 
                 notes.transition().style({'opacity': 1});
-
+                if (d3.event !== null) { //only triger this for mouse events
+                    var adjacentTracks = [];
+                    node.adjacentNodeSelection.each(function(node) {
+                        adjacentTracks.push(node.name);
+                    })
+                    adjacentTracks.push(node.name);
+                    worksheet.highlightMarksAsync("Track Name", adjacentTracks);
+                }
             } else {
 
                 // Since we're de-selecting the current
@@ -732,6 +767,8 @@ function renderNetwork(jsonData, linkField, linkDelta) {
                 // position transition.
 
                 fillColor = labelFill;
+
+                worksheet.clearHighlightedMarksAsync();
             }
 
             // Toggle the selection state for the node.
