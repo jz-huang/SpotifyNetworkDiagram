@@ -51,7 +51,7 @@ function StopSound() {
 
 function initViz() {
     var containerDiv = document.getElementById("vizContainer"),
-        url = "http://10.32.134.4/views/SXSWJoin_old/Sheet2?:embed=y&:showShareOptions=true&:display_count=no&:showVizHome=no",
+        url = "http://10.32.134.4/views/SXSWJoin_old/Sheet3?:embed=y&:showShareOptions=true&:display_count=no&:showVizHome=no",
         options = {
             hideTabs: true,
             hideToolbar: true,
@@ -80,9 +80,12 @@ function convertToJSON(dataTable){
     var fieldNamesNeeded = ["Album Name", "Artist Name", "Explicit", "Image URL", "Preview Url", "Track Name", "Danceability", 
                       "Energy", "Instrumentalness", "Key", "Liveness", "Loudness", "Popularity", "Tempo", "Valence", 
                       "Time Signature"];
-    var fieldNames = ["albumName", "artistName", "explicit", "imageUrl", "imageIndex", "previewUrl", "name", "danceability", "energy",
-                      "instrumentalness", "key", "liveness", "mode","loudness", "numRecords", "Popularity", "speechiness", "Tempo",
-                      "timeSignature", "valence"]
+    // var fieldNames = ["albumName", "artistName", "explicit", "imageUrl", "imageIndex", "previewUrl", "name", "danceability", "energy",
+    //                   "instrumentalness", "key", "liveness", "mode","loudness", "numRecords", "Popularity", "speechiness", "Tempo",
+    //                   "timeSignature", "valence"];
+    var fieldNames = ["acousticness", "albumName", "albumType", "artistIndex", "artistName", "duration", "duration2", "explicit", "id", "id2", 
+                      "imageUrl", "imageIndex", "previewUrl", "name", "trackNumber", "danceability", "energy", "instrumentalness", "key", 
+                      "liveness", "loudness", "mode", "numRecords", "popularity", "popularity2", "speechiness", "tempo", "timeSignature", "valence"];
     var fieldNamesIndexMap = {};
     columns.forEach(function(column) {
         if (fieldNamesNeeded.indexOf(column.getFieldName()) !== -1) {
@@ -152,7 +155,7 @@ function getUnderlyingData(){
     options["ignoreAliases"] = false;
     options["ignoreSelection"] = true;
     options["getJSON"] = false;
-    options["includeAllColumns"] = false;
+    options["includeAllColumns"] = true;
     sheet.getUnderlyingDataAsync(options).then(function(t){
             table = t;
             renderNetwork(convertToJSON(table), currentLinkField, currentDelta);
