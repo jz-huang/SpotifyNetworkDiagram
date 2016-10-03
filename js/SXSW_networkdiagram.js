@@ -1,7 +1,3 @@
-$(document).ready(function() {
-    $()
-})
-
 var viz, sheet, table, api_options;
 var danceability_delta = 0.02; //if the dancebility difference between two tracks is less than delta, then form a link
 var previouslyCheckedExplicit;
@@ -9,6 +5,15 @@ var previousExplicitCheckResult;
 var currentLinkField = "danceability";
 var currentDelta = 0.05;
 var currentData;
+var deltas = {"danceability":0.05, "energy":0.05, "liveness":0.02, "speechiness":0.01}
+
+$(document).ready(function() {
+    $('#properties-dropdown').change(function(event) {
+        var property = $(this).val(); 
+        updateNetWork(property, deltas[property]);
+    });
+})
+
 function PlaySoundWithExplicitCheck(explicit) {
     if (explicit === 'false') {
         PlaySound();
@@ -74,7 +79,7 @@ function convertToJSON(dataTable){
     console.log(input.length)
 
     var fieldNames = ["albumName", "artistName", "explicit", "imageUrl", "imageIndex", "previewUrl", "name", "danceability", "energy",
-                      "instrumentalness", "key", "liveness", "mode","loudness", "numRecords", "Popularity", "Speechiness", "Tempo",
+                      "instrumentalness", "key", "liveness", "mode","loudness", "numRecords", "Popularity", "speechiness", "Tempo",
                       "timeSignature", "valence"]
     var tracksMap = {};
 
@@ -141,7 +146,7 @@ function handleFilterEvent(filterEvent) {
     options["includeAllColumns"] = false;
     sheet.getUnderlyingDataAsync(options).then(function(t){
         table = t;
-        updateNetWorkData(table, currentLinkField, currentDelta);
+        updateNetWorkData(convertToJSON(table), currentLinkField, currentDelta);
     });
 }
 
@@ -149,10 +154,15 @@ function updateNetWork(linkField, linkDelta) {
     updateNetWorkData(currentData, linkField, linkDelta);
 }
 
-function updateNetWorkData(table, linkField, linkDelta) {
+function updateNetWorkData(data, linkField, linkDelta) {
     $('#graph').empty();
     $('#notes').empty();
-    renderNetwork(convertToJSON(table), linkField, linkDelta);
+    nodeSelection = null;
+    edgeSelection = null;
+    labelSelection = null; 
+    labelLinkSelection = null;
+    connectionSelection = null;
+    renderNetwork(data, linkField, linkDelta);
 }
 
 var nodeSelection;
@@ -339,8 +349,8 @@ function renderNetwork(jsonData, linkField, linkDelta) {
 
             for (var tgtIdx = srcIdx +1; tgtIdx < srcList.length; tgtIdx++) {
                 var tgtNode = srcList[tgtIdx];
-                var targetValue = parseFloat(tgtNode.danceability);
-                var srcValue = parseFloat(srcNode.danceability);
+                var targetValue = parseFloat(tgtNode[linkField]);
+                var srcValue = parseFloat(srcNode[linkField]);
                 if (Math.abs(targetValue-srcValue) < linkDelta) {
                     links.push({
                         source: srcIdx,

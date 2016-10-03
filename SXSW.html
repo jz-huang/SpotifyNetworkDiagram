@@ -150,25 +150,14 @@
         <!-- Latest compiled and minified JavaScript -->
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
-        <div class="col-xs-2" id="linkProperty">
-          <label for="ex1">Link On Property</label>
-          <input class="form-control" id="ex1" type="text">
-        </div>
-
-        <div class="col-xs-2" id="linkDelta">
-          <label for="ex1">Maximum Difference For Forming Link</label>
-          <input class="form-control" id="ex1" type="text">
-        </div>
-
-        <br>
-        <button type="button" id="submit" class="btn btn-primary" onclick="updateNetWork()">Update Network Diagram!</button>
         <label for="properties-dropdown"> Select Property </label>
         <select class="form-control" id="properties-dropdown" type="properties-dropdown">
-            <option value="one">Danceability</option>
-            <option value="two">Energy</option>
-            <option value="three">Speechiness</option>
-            <option value="four">Liveness</option>
+            <option value="danceability">Danceability</option>
+            <option value="energy">Energy</option>
+            <option value="speechiness">Speechiness</option>
+            <option value="liveness">Liveness</option>
         </select>
+
         <div id='container'>
             <div id='graph'></div>
             <div id='notes'></div>
