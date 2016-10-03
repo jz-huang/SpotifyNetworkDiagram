@@ -5,7 +5,7 @@ var previousExplicitCheckResult;
 var currentLinkField = "danceability";
 var currentDelta = 0.05;
 var currentData;
-var deltas = {"danceability":0.05, "energy":0.05, "liveness":0.02, "speechiness":0.01}
+var deltas = {"danceability":0.05, "energy":0.05, "liveness":0.01, "speechiness":0.04}
 
 $(document).ready(function() {
     $('#properties-dropdown').change(function(event) {
@@ -77,10 +77,44 @@ function convertToJSON(dataTable){
     var columns = dataTable.getColumns();
     var input = dataTable.getData();
     console.log(input.length)
-
+    var fieldNamesNeeded = ["Album Name", "Artist Name", "Explicit", "Image URL", "Preview Url", "Track Name", "Danceability", 
+                      "Energy", "Instrumentalness", "Key", "Liveness", "Loudness", "Popularity", "Tempo", "Valence", 
+                      "Time Signature"];
     var fieldNames = ["albumName", "artistName", "explicit", "imageUrl", "imageIndex", "previewUrl", "name", "danceability", "energy",
                       "instrumentalness", "key", "liveness", "mode","loudness", "numRecords", "Popularity", "speechiness", "Tempo",
                       "timeSignature", "valence"]
+    var fieldNamesIndexMap = {};
+    columns.forEach(function(column) {
+        if (fieldNamesNeeded.indexOf(column.getFieldName()) !== -1) {
+            fieldNamesIndexMap[column.getFieldName()] = column.getIndex();
+        }
+    });
+
+    // var tracksMapBeta = {};
+
+    // for (rowIndex = 0; rowIndex < input.length; rowIndex++) {
+    //     var dataEntry = input[rowIndex];
+    //     var name = dataEntry[fieldNamesIndex["Track Name"]].value;
+    //     if (tracksMapBeta[name] !== undefined) {
+    //         tracksMapBeta[name]["Artist Name"].push(dataEntry[fieldNamesIndex["Artist Name"]]);
+    //         continue;
+    //     }
+    //     track = {};
+    //     for (field in fieldNamesIndexMap) {
+    //         var fieldIndex = fieldNamesIndexMap[field];
+    //         if (field === "Artist Name") {
+    //             track[field] = [dataEntry[fieldIndex]];
+    //         } else {
+    //             track[field] = dataEntry[fieldIndex];
+    //         }
+    //     }
+    //     tracksMapBeta[dataEntry[fieldNamesIndexMap["Track Name"]]] = track;
+    // }
+
+    // console.log(tracksMapBeta);
+
+
+
     var tracksMap = {};
 
     for(rowIndex = 0; rowIndex < input.length; rowIndex++) {
