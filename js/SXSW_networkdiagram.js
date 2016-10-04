@@ -2,10 +2,10 @@ var viz, sheet, table, api_options;
 var danceability_delta = 0.02; //if the dancebility difference between two tracks is less than delta, then form a link
 var previouslyCheckedExplicit;
 var previousExplicitCheckResult;
-var currentLinkField = "danceability";
+var currentLinkField = "Danceability";
 var currentDelta = 0.05;
 var currentData;
-var deltas = {"danceability":0.05, "energy":0.05, "liveness":0.01, "speechiness":0.04}
+var deltas = {"Danceability":0.05, "Energy":0.05, "Liveness":0.01, "Speechiness":0.04}
 
 $(document).ready(function() {
     $('#properties-dropdown').change(function(event) {
@@ -13,6 +13,12 @@ $(document).ready(function() {
         updateNetWork(property, deltas[property]);
     });
 })
+
+function function getColor(value){
+    //value from 0 to 1
+    var hue=((1-value)*120).toString(10);
+    return ["hsl(",hue,",100%,50%)"].join("");
+}
 
 function PlaySoundWithExplicitCheck(explicit) {
     if (explicit === 'false') {
@@ -80,62 +86,32 @@ function convertToJSON(dataTable){
     var fieldNamesNeeded = ["Album Name", "Artist Name", "Explicit", "Image URL", "Preview Url", "Track Name", "Danceability", 
                       "Energy", "Instrumentalness", "Key", "Liveness", "Loudness", "Popularity", "Tempo", "Valence", 
                       "Time Signature"];
-    // var fieldNames = ["albumName", "artistName", "explicit", "imageUrl", "imageIndex", "previewUrl", "name", "danceability", "energy",
-    //                   "instrumentalness", "key", "liveness", "mode","loudness", "numRecords", "Popularity", "speechiness", "Tempo",
-    //                   "timeSignature", "valence"];
-    var fieldNames = ["acousticness", "albumName", "albumType", "artistIndex", "artistName", "duration", "duration2", "explicit", "id", "id2", 
-                      "imageUrl", "imageIndex", "previewUrl", "name", "trackNumber", "danceability", "energy", "instrumentalness", "key", 
-                      "liveness", "loudness", "mode", "numRecords", "popularity", "popularity2", "speechiness", "tempo", "timeSignature", "valence"];
     var fieldNamesIndexMap = {};
     columns.forEach(function(column) {
         if (fieldNamesNeeded.indexOf(column.getFieldName()) !== -1) {
             fieldNamesIndexMap[column.getFieldName()] = column.getIndex();
         }
     });
-
-    // var tracksMapBeta = {};
-
-    // for (rowIndex = 0; rowIndex < input.length; rowIndex++) {
-    //     var dataEntry = input[rowIndex];
-    //     var name = dataEntry[fieldNamesIndex["Track Name"]].value;
-    //     if (tracksMapBeta[name] !== undefined) {
-    //         tracksMapBeta[name]["Artist Name"].push(dataEntry[fieldNamesIndex["Artist Name"]]);
-    //         continue;
-    //     }
-    //     track = {};
-    //     for (field in fieldNamesIndexMap) {
-    //         var fieldIndex = fieldNamesIndexMap[field];
-    //         if (field === "Artist Name") {
-    //             track[field] = [dataEntry[fieldIndex]];
-    //         } else {
-    //             track[field] = dataEntry[fieldIndex];
-    //         }
-    //     }
-    //     tracksMapBeta[dataEntry[fieldNamesIndexMap["Track Name"]]] = track;
-    // }
-
-    // console.log(tracksMapBeta);
-
-
-
     var tracksMap = {};
-
-    for(rowIndex = 0; rowIndex < input.length; rowIndex++) {
-        var name = input[rowIndex][fieldNames.indexOf("name")].value;
+    for (rowIndex = 0; rowIndex < input.length; rowIndex++) {
+        var dataEntry = input[rowIndex];
+        var name = dataEntry[fieldNamesIndexMap["Track Name"]].value;
         if (tracksMap[name] !== undefined) {
-            tracksMap[name].artistName.push(input[rowIndex][fieldNames.indexOf("artistName")].value);
+            if (tracksMap[name]["Artist Name"].indexOf(dataEntry[fieldNamesIndexMap["Artist Name"]].value) === -1 ) {
+                tracksMap[name]["Artist Name"].push(dataEntry[fieldNamesIndexMap["Artist Name"]].value);
+            } 
             continue;
         }
         track = {};
-        columns.forEach(function(column) {
-            if (column.getIndex() === fieldNames.indexOf("artistName")) {
-
-                track[fieldNames[column.getIndex()]] = [input[rowIndex][column.getIndex()].value];
+        for (field in fieldNamesIndexMap) {
+            var fieldIndex = fieldNamesIndexMap[field];
+            if (field === "Artist Name") {
+                track[field] = [dataEntry[fieldIndex].value];
             } else {
-                track[fieldNames[column.getIndex()]] = input[rowIndex][column.getIndex()].value;
+                track[field] = dataEntry[fieldIndex].value;
             }
-        });
-        tracksMap[track.name] = track;
+        }
+        tracksMap[name] = track;
     }
 
     var tracks = [];
@@ -180,7 +156,7 @@ function handleFilterEvent(filterEvent) {
     options["ignoreAliases"] = false;
     options["ignoreSelection"] = true;
     options["getJSON"] = false;
-    options["includeAllColumns"] = false;
+    options["includeAllColumns"] = true;
     sheet.getUnderlyingDataAsync(options).then(function(t){
         table = t;
         updateNetWorkData(convertToJSON(table), currentLinkField, currentDelta);
@@ -194,11 +170,8 @@ function updateNetWork(linkField, linkDelta) {
 function updateNetWorkData(data, linkField, linkDelta) {
     $('#graph').empty();
     $('#notes').empty();
-    nodeSelection = null;
-    edgeSelection = null;
-    labelSelection = null; 
-    labelLinkSelection = null;
-    connectionSelection = null;
+    currentLinkField = linkField; 
+    currentLinkDelta = linkDelta;
     renderNetwork(data, linkField, linkDelta);
 }
 
@@ -210,7 +183,7 @@ var connectionSelection;
 
 function clickNode(trackName) {
     var selectedNode = nodeSelection.each(function(node) {
-        if (node.name === trackName) {
+        if (node["Track Name"] === trackName) {
             nodeSelection.on('click')(node);
             return;
         }
@@ -478,7 +451,10 @@ function renderNetwork(jsonData, linkField, linkDelta) {
         nodeSelection.append('circle')
             .attr('r', nodeRadius)
             .attr('data-node-index', function(d,i) { return i;})
-            .style('fill', nodeFill)
+            //.style('fill', nodeFill)
+            .style('fill', function(d, i) {
+
+            })
 
         // Now that we have our main selections (edges and
         // nodes), we can create some subsets of those
@@ -592,7 +568,7 @@ function renderNetwork(jsonData, linkField, linkDelta) {
 
         labelSelection.append('text')
             .text(function(d, i) {
-                return i % 2 == 0 ? '' : d.node.name;
+                return i % 2 == 0 ? '' : d.node["Track Name"];
             })
             .attr('data-node-index', function(d, i){
                 return i % 2 == 0 ? 'none' : Math.floor(i/2);
@@ -756,27 +732,27 @@ function renderNetwork(jsonData, linkField, linkDelta) {
                 // Now add the notes content.
                 notes.append('audio')
                         .attr('id', 'audioPreview')
-                        .attr('src', node.previewUrl);
+                        .attr('src', node["Preview Url"]);
 
-                notes.append('h1').text(node.name);
-                notes.append('h2').text("Album: " + node.albumName);
-                if (node.imageUrl) {
+                notes.append('h1').text(node["Track Name"]);
+                notes.append('h2').text("Album: " + node["Album Name"]);
+                if (node["Image URL"]) {
                     notes.append('div')
                         .on('mouseover', function() {
-                            PlaySoundWithExplicitCheck(node.explicit);
+                            PlaySoundWithExplicitCheck(node["Explicit"]);
                         })
                         .on('mouseout', StopSound)
                         .classed('artwork',true)
                         .append('a')
                         .append('img')
-                            .attr('src', node.imageUrl)
+                            .attr('src', node["Image URL"])
                             .attr('style', "width:200px;height:200px;")
 
                 }
                 notes.append('br');
 
                 var list = notes.append('ul').text("Artists: ");
-                node.artistName.forEach(function(link){
+                node["Artist Name"].forEach(function(link){
                     list.append('li')
                         .text(link);
                 });
@@ -788,9 +764,9 @@ function renderNetwork(jsonData, linkField, linkDelta) {
                 if (d3.event !== null) { //only triger this for mouse events
                     var adjacentTracks = [];
                     node.adjacentNodeSelection.each(function(node) {
-                        adjacentTracks.push(node.name);
+                        adjacentTracks.push(node["Track Name"]);
                     })
-                    adjacentTracks.push(node.name);
+                    adjacentTracks.push(node["Track Name"]);
                     worksheet.highlightMarksAsync("Track Name", adjacentTracks);
                 }
             } else {
