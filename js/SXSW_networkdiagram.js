@@ -9,12 +9,12 @@ var deltas = {"Danceability":0.05, "Energy":0.05, "Liveness":0.01, "Speechiness"
 
 $(document).ready(function() {
     $('#properties-dropdown').change(function(event) {
-        var property = $(this).val(); 
+        var property = $(this).val();
         updateNetWork(property, deltas[property]);
     });
 })
 
-function function getColor(value){
+function getColor(value){
     //value from 0 to 1
     var hue=((1-value)*120).toString(10);
     return ["hsl(",hue,",100%,50%)"].join("");
@@ -83,8 +83,8 @@ function convertToJSON(dataTable){
     var columns = dataTable.getColumns();
     var input = dataTable.getData();
     console.log(input.length)
-    var fieldNamesNeeded = ["Album Name", "Artist Name", "Explicit", "Image URL", "Preview Url", "Track Name", "Danceability", 
-                      "Energy", "Instrumentalness", "Key", "Liveness", "Loudness", "Popularity", "Tempo", "Valence", 
+    var fieldNamesNeeded = ["Album Name", "Artist Name", "Explicit", "Image URL", "Preview Url", "Track Name", "Danceability",
+                      "Energy", "Instrumentalness", "Key", "Liveness", "Loudness", "Popularity", "Tempo", "Valence",
                       "Time Signature"];
     var fieldNamesIndexMap = {};
     columns.forEach(function(column) {
@@ -99,7 +99,7 @@ function convertToJSON(dataTable){
         if (tracksMap[name] !== undefined) {
             if (tracksMap[name]["Artist Name"].indexOf(dataEntry[fieldNamesIndexMap["Artist Name"]].value) === -1 ) {
                 tracksMap[name]["Artist Name"].push(dataEntry[fieldNamesIndexMap["Artist Name"]].value);
-            } 
+            }
             continue;
         }
         track = {};
@@ -170,7 +170,7 @@ function updateNetWork(linkField, linkDelta) {
 function updateNetWorkData(data, linkField, linkDelta) {
     $('#graph').empty();
     $('#notes').empty();
-    currentLinkField = linkField; 
+    currentLinkField = linkField;
     currentLinkDelta = linkDelta;
     renderNetwork(data, linkField, linkDelta);
 }
@@ -310,7 +310,7 @@ function renderNetwork(jsonData, linkField, linkDelta) {
             for (var fieldName in entry) {
                 node[fieldName] = entry[fieldName];
             }
-            node.color = '#'+(Math.random()*0xFFFFFF<<0).toString(16);
+            node.color = getColor(node[linkField]);
 
             // We'll also copy the musicians, again using
             // a more neutral property. At the risk of
@@ -451,10 +451,9 @@ function renderNetwork(jsonData, linkField, linkDelta) {
         nodeSelection.append('circle')
             .attr('r', nodeRadius)
             .attr('data-node-index', function(d,i) { return i;})
-            //.style('fill', nodeFill)
             .style('fill', function(d, i) {
-
-            })
+                return getColor(d[linkField])
+            });
 
         // Now that we have our main selections (edges and
         // nodes), we can create some subsets of those
@@ -648,7 +647,9 @@ function renderNetwork(jsonData, linkField, linkDelta) {
                 .selectAll('circle')
                     .transition()
                     .attr('r', nodeRadius)
-                    .style('fill', nodeFill);
+                    .style('fill', function(node, index) {
+                        return getColor(node[linkField]);
+                    });
 
             edgeSelection
                 .transition()
