@@ -119,7 +119,6 @@ function convertToJSON(dataTable){
         tracks.push(tracksMap[trackName]);
     }
     currentData = tracks;
-    //calculateDeltas(tracks);
     return tracks;
 }
 
@@ -617,7 +616,7 @@ function renderNetwork(jsonData, linkField, linkDelta) {
 
         // Function to handle clicks on node elements
 
-        var nodeClicked = function(node) {
+        var nodeClicked = function(node, callback) {
 
             // Ignore events based on dragging.
 
