@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>D3 Network Diagram Integration With Tableau</title>
+        <style>
+            body, h1, h2 {
+                color: #444;
+                font-family: 'Helvetica Neue', Helvetica, sans-serif;
+                font-weight: 300;
+            }
+            #graph {
+                float: left;
+                position: relative;
+            }
+            #notes {
+                float: left;
+                margin-left: 20px;
+            }
+            h1, h2 {
+                margin: 0;
+            }
+            h1 {
+                font-size: 1.4em;
+                margin-bottom: 0.2em;
+            }
+            h2 {
+                font-size: 1.1em;
+                margin-bottom: 1em;
+            }
+            .artwork img {
+                border: 1px solid #fff;
+                -webkit-box-shadow: 0 3px 5px rgba(0,0,0,.3);
+                -moz-box-shadow: rgba(0,0,0,.3) 0 3px 5px;
+                border-color: #a2a2a2    9;
+            }
+            ul {
+                list-style: none;
+                padding-left: 0;
+            }
+            li {
+                padding-top: 0.2em;
+            }
+            .node circle, circle.node {
+                cursor:       pointer;
+                fill:         #ccc;
+                stroke:       #fff;
+                stroke-width: 1px;
+            }
+            .edge line, line.edge {
+                cursor:       pointer;
+                stroke:       #aaa;
+                stroke-width: 2px;
+            }
+            .labelNode text, text.labelNode {
+                cursor:       pointer;
+                fill:        #444;
+                font-size:   11px;
+                font-weight: normal;
+            }
+            ul.connection {
+                background-color: #f0f0f0;
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+                cursor: pointer;
+                font-size: 11px;
+                font-weight: normal;
+                padding: 10px;
+                position: absolute;
+            }
+            ul.connection:before,
+            ul.connection:after {
+                border: 10px solid transparent;
+                content: '';
+                position: absolute;
+            }
+            ul.connection:before {
+                border-bottom-color: #f0f0f0;
+                top: -19px;
+                left: 20px;
+                z-index: 2;
+            }
+            ul.connection:after {
+                border-bottom-color: rgba(0, 0, 0, 0.2);
+                top: -21px;
+                left: 20px;
+                z-index: 1;
+            }
+            ul.connection.hidden {
+                display: none;
+            }
+            #submit {
+                float:left;
+                clear:both;
+                position:relative;
+                left:350px;
+            }
+            #properties-dropdown {
+                width: 200px;
+            }
+        </style>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+        <script src='http://d3js.org/d3.v3.min.js'></script>
+        <script type="text/javascript" src="http://10.32.134.4/javascripts/api/tableau-2.js"></script>
+        <script type="text/javascript" src="js/networkDiagram.js"></script>
+        <script type="text/javascript" src="js/customVizIntegration.js"></script>
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+        <!-- Optional theme -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+        <!-- Latest compiled and minified JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    </head>
+
+    <body onload="initTableauViz();">
+        <div class="page-header">
+            <h1>D3 Integration With Tableau</h1>
+            <h3>Spotify Playlist</h3>
+            <br />
+            <h5>Click the "Generate Network Diagram" button to generate a network diagram (created in d3).</h5>
+            <h5>Make sure to click and drag nodes, click nodes, and click on node connectors.</h5>
+            <br />
+            <button id="generateNetwork" onclick="getDataAndConstructGraph()" class="btn" disabled>Generate Network Diagram</button>
+        </div>
+
+        <div id="vizContainer" style="width:1000px; height:600px;"></div>
+
+        <label for="properties-dropdown"> Select Property </label>
+        <select class="form-control" id="properties-dropdown" type="properties-dropdown">
+            <option value="Danceability">Danceability</option>
+            <option value="Energy">Energy</option>
+            <option value="Liveness">Liveness</option>
+        </select>
+
+        <div id="container">
+            <div id="graph"></div>
+            <div id="notes"></div>
+        </div>
+
+        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">Explicit Content Detected!</h4>
+              </div>
+              <div class="modal-body">
+                This song contains explicit content, you sure you want to proceed to playing?
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" id="rejectButton">No, don't play!</button>
+                <button type="button" class="btn btn-primary" id="acceptButton">Keep playing!</button>
+              </div>
+            </div>
+          </div>
+        </div>
+    </body>
+</html>

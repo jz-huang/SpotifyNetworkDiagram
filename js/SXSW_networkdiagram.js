@@ -44,15 +44,15 @@ function setExplicitCheckResulToFalse() {
 
 function PlaySound() {
     previousExplicitCheck = true;
-    var thissound=document.getElementById("audioPreview");
-    thissound.play();
+    var selectedTrack=document.getElementById("audioPreview");
+    selectedTrack.play();
 
 }
 
 function StopSound() {
-    var thissound=document.getElementById("audioPreview");
-    thissound.pause();
-    thissound.currentTime = 0;
+    var selectedTrack=document.getElementById("audioPreview");
+    selectedTrack.pause();
+    selectedTrack.currentTime = 0;
 }
 
 function initViz() {
@@ -79,40 +79,44 @@ function initViz() {
 }
 
 // Takes an array
-function convertToJSON(dataTable){
+function convertToJSON(dataTable) {
     var columns = dataTable.getColumns();
-    var input = dataTable.getData();
-    console.log(input.length)
+    var data = dataTable.getData();
+    //console.log(input.length)
     var fieldNamesNeeded = ["Album Name", "Artist Name", "Explicit", "Image URL", "Preview Url", "Track Name", "Danceability",
                       "Energy", "Instrumentalness", "Key", "Liveness", "Loudness", "Popularity", "Tempo", "Valence",
                       "Time Signature"];
     var fieldNamesIndexMap = {};
     columns.forEach(function(column) {
-        if (fieldNamesNeeded.indexOf(column.getFieldName()) !== -1) {
+        if (fieldNamesNeeded.includes(column.getFieldName()) !== -1) {
             fieldNamesIndexMap[column.getFieldName()] = column.getIndex();
         }
     });
+
     var tracksMap = {};
-    for (rowIndex = 0; rowIndex < input.length; rowIndex++) {
-        var dataEntry = input[rowIndex];
-        var name = dataEntry[fieldNamesIndexMap["Track Name"]].value;
-        if (tracksMap[name] !== undefined) {
-            if (tracksMap[name]["Artist Name"].indexOf(dataEntry[fieldNamesIndexMap["Artist Name"]].value) === -1 ) {
-                tracksMap[name]["Artist Name"].push(dataEntry[fieldNamesIndexMap["Artist Name"]].value);
+    data.forEach(function(rowEntry) {
+        var trackName = rowEntry[fieldNamesIndexMap["Track Name"]].value;
+        //tracks with multiple artists lead to multiple entries for a track in data set
+        if (tracksMap[trackName] !== undefined) {
+            var artistNames = tracksMap[trackName]["Artist Name"];
+            var newArtistName = rowEntry[fieldNamesIndexMap["Artist Name"]].value;
+            if (!artistNames.includes(newArtistName)) {
+                artistNames.push(newArtistName);
             }
-            continue;
+            return;
         }
-        track = {};
+        var track = {};
         for (field in fieldNamesIndexMap) {
             var fieldIndex = fieldNamesIndexMap[field];
+            var fieldValue = rowEntry[fieldIndex].value;
             if (field === "Artist Name") {
-                track[field] = [dataEntry[fieldIndex].value];
+                track[field] = [fieldValue];
             } else {
-                track[field] = dataEntry[fieldIndex].value;
+                track[field] = fieldValue;
             }
         }
-        tracksMap[name] = track;
-    }
+        tracksMap[trackName] = track;
+    });
 
     var tracks = [];
     for (var trackName in tracksMap) {
@@ -123,8 +127,10 @@ function convertToJSON(dataTable){
 }
 
 
+
 function getUnderlyingData(){
     sheet = viz.getWorkbook().getActiveSheet();
+
     options = {};
     options["maxRows"] = 0;
     options["ignoreAliases"] = false;

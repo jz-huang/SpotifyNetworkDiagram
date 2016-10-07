@@ -1,33 +1,43 @@
-var NetWorkDiagram = function(data, linkField, deltas, containerDiv, notesDiv, visualProperties) {
-	this.data = data;
-	this.linkField = linkField;
-	this.deltas = deltas;
-	this.container = containerDOM;
-	this.width = visualProperties.width || 800;
-	this.height = visualProperties.height || 600;
+//This file contains most of the logic for the d3 viz, which is represented through an instance
+//of the NetWorkDiagram class.
+var NetWorkDiagram = function(deltas, containerDiv, notesDiv) {
+    this.deltas = deltas;
     //The main graph container
 	this.graph = containerDiv;
 	this.notes = notesDiv;
 	//Visual Properties of the graph
-	this.labelFill = visualProperties.labelFill || '#444';
-	this.adjLabelFill = visualProperties.adjLabelFill || '#aaa';
-	this.edgeStroke = visualProperties.edgeStroke || '#aaa';
-	this.nodeRadius = visualProperties.nodeRatius || 10;
-	this.selectedNodeRatius = visualProperties.selectedNodeRatius || 30;
 }
 
-NetWorkDiagram.prototype.renderNetWork = function(data, linkField, linkDelta) {
-    this.data = data; 
-    this.linkField = linkField; 
-    this.linkDelta = linkDelta;
+NetWorkDiagram.prototype.renderNetWork = function(data, linkField) {
+    this.data = data;
+    this.linkField = linkField;
+    var linkDelta = this.deltas[linkField];
+    var that = this;
+    // Define the dimensions of the visualization. We're using
+    // a size that's convenient for displaying the graphic on
+    // http://bl.ocks.org
 
-	var linkDistance = Math.min(this.width, this.height)/4;
+    var width = 800,
+        height = 600;
+
+    // Visual properties of the graph are next. We need to make
+    // those that are going to be animated accessible to the
+    // JavaScript.
+
+    var labelFill = '#444';
+    var adjLabelFill = '#aaa';
+    var edgeStroke = '#aaa';
+    var nodeFill = '#ccc';
+    var nodeRadius = 10;
+    var selectedNodeRadius = 30;
+
+    var linkDistance = Math.min(width,height)/4;
 
 	// Create the SVG container for the visualization and
     // define its dimensions.
-    var svg = graph.append('svg')
-        .attr('width', this.width)
-        .attr('height', this.height);
+    var svg = this.graph.append('svg')
+        .attr('width', width)
+        .attr('height', height);
 
 
     // Utility function to update the position properties
@@ -123,7 +133,7 @@ NetWorkDiagram.prototype.renderNetWork = function(data, linkField, linkDelta) {
         // arbitrarily, we start the nodes off in a
         // circle in the center of the container.
 
-        var radius = 0.4 * Math.min(height,width);
+        var radius = 0.4 * Math.min(height, width);
         var theta = idx*2*Math.PI / list.length;
         node.x = (width/2) + radius*Math.sin(theta);
         node.y = (height/2) + radius*Math.cos(theta);
@@ -262,7 +272,7 @@ NetWorkDiagram.prototype.renderNetWork = function(data, linkField, linkDelta) {
         // a D3 selection so we can manipulate the
         // set easily with D3 utilities.
 
-        node.incidentEdgeSelection = edgeSelection
+        node.incidentEdgeSelection = that.edgeSelection
             .filter(function(edge) {
                 return nodes[edge.source] === node ||
                     nodes[edge.target] === node;
@@ -277,7 +287,7 @@ NetWorkDiagram.prototype.renderNetWork = function(data, linkField, linkDelta) {
         // An adjacent node shares an edge with the
         // current node.
 
-        node.adjacentNodeSelection = nodeSelection
+        node.adjacentNodeSelection = that.nodeSelection
             .filter(function(otherNode){
 
                 // Presume that the nodes are not adjacent.
@@ -369,7 +379,7 @@ NetWorkDiagram.prototype.renderNetWork = function(data, linkField, linkDelta) {
     // The last bit of markup are the lists of
     // connections for each link.
 
-    this.connectionSelection = graph.selectAll('ul.connection')
+    this.connectionSelection = this.graph.selectAll('ul.connection')
         .data(edges)
         .enter()
         .append('ul')
@@ -410,16 +420,16 @@ NetWorkDiagram.prototype.renderNetWork = function(data, linkField, linkDelta) {
 
     // Handle clicks on the nodes.
 
-    nodeSelection.on('click', this.nodeClicked);
+    this.nodeSelection.on('click', this.nodeClicked);
 
-    labelSelection.on('click', function(pseudonode) {
+    this.labelSelection.on('click', function(pseudonode) {
         nodeClicked(pseudonode.node);
     });
 
     // Handle clicks on the edges.
 
-    edgeSelection.on('click', this.edgeClicked);
-    connectionSelection.on('click', this.edgeClicked);
+    this.edgeSelection.on('click', this.edgeClicked);
+    this.connectionSelection.on('click', this.edgeClicked);
 
     // Animate the force layout.
 
@@ -428,7 +438,7 @@ NetWorkDiagram.prototype.renderNetWork = function(data, linkField, linkDelta) {
         // Constrain all the nodes to remain in the
         // graph container.
 
-        nodeSelection.each(function(node) {
+        that.nodeSelection.each(function(node) {
             node.x = Math.max(node.x, 2*selectedNodeRadius);
             node.y = Math.max(node.y, 2*selectedNodeRadius);
             node.x = Math.min(node.x, width-2*selectedNodeRadius);
@@ -442,7 +452,7 @@ NetWorkDiagram.prototype.renderNetWork = function(data, linkField, linkDelta) {
 
         // Calculate the positions of the label nodes.
 
-        labelSelection.each(function(label, idx) {
+        that.labelSelection.each(function(label, idx) {
 
             // Label pseudo-nodes come in pairs. We
             // treat odd and even nodes differently.
@@ -472,7 +482,7 @@ NetWorkDiagram.prototype.renderNetWork = function(data, linkField, linkDelta) {
 
         // Calculate the position for the connection lists.
 
-        connectionSelection.each(function(connection){
+        that.connectionSelection.each(function(connection){
             var x = (connection.source.x + connection.target.x)/2 - 27;
             var y = (connection.source.y + connection.target.y)/2;
             d3.select(this)
@@ -484,10 +494,10 @@ NetWorkDiagram.prototype.renderNetWork = function(data, linkField, linkDelta) {
 
         // Update the posistions of the nodes and edges.
 
-        nodeSelection.call(positionNode);
-        labelSelection.call(positionNode);
-        edgeSelection.call(positionEdge);
-        labelLinkSelection.call(positionEdge);
+        that.nodeSelection.call(positionNode);
+        that.labelSelection.call(positionNode);
+        that.edgeSelection.call(positionEdge);
+        that.labelLinkSelection.call(positionEdge);
 
     });
 
@@ -496,6 +506,18 @@ NetWorkDiagram.prototype.renderNetWork = function(data, linkField, linkDelta) {
     labelForce.start();
 
 };
+
+NetWorkDiagram.prototype.updateNetWorkData = function(data) {
+    this.graph.selectAll("*").remove();
+    this.notes.selectAll("*").remove();
+    this.renderNetwork(data, this.linkField);
+}
+
+NetWorkDiagram.prototype.updateNetWorkLinkProperty = function(linkField) {
+    this.graph.selectAll("*").remove();
+    this.notes.selectAll("*").remove();
+    this.renderNetWork(this.data, linkField);
+}
 
 NetWorkDiagram.prototype.nodeClicked = function(node, callback) {
     // Ignore events based on dragging.
@@ -507,7 +529,7 @@ NetWorkDiagram.prototype.nodeClicked = function(node, callback) {
     var selected = node.selected;
 
     //prevent selections on tableau viz from deselecting the d3 viz
-    if (selected && d3.event === null) { 
+    if (selected && d3.event === null) {
         return;
     }
 
@@ -560,7 +582,7 @@ NetWorkDiagram.prototype.nodeClicked = function(node, callback) {
             .attr('r', nodeRadius)
             .style('fill', node.color);
 
-        labelSelection
+        this.labelSelection
             .filter(function(label) {
                 var adjacent = false;
                 node.adjacentNodeSelection.each(function(d){
@@ -584,7 +606,7 @@ NetWorkDiagram.prototype.nodeClicked = function(node, callback) {
 
         // Make sure the node's label is visible
 
-        labelSelection
+        this.labelSelection
             .filter(function(label) {return label.node === node;})
             .transition()
             .style('opacity', 1);
@@ -594,8 +616,9 @@ NetWorkDiagram.prototype.nodeClicked = function(node, callback) {
 
         fillColor = node.text;
 
-        previouslyCheckedExplicit = false;
-        previousExplicitCheckResult = false;
+        this.selectedNode = node;
+        node.previouslyCheckedExplicit = false;
+        node.previousExplicitCheckResult = false;
 
         // Delete the current notes section to prepare
         // for new information.
@@ -616,16 +639,17 @@ NetWorkDiagram.prototype.nodeClicked = function(node, callback) {
 
         this.notes.append('h1').text(node["Track Name"]);
         this.notes.append('h2').text("Album: " + node["Album Name"]);
-        if (node["Image URL"]) {
+        var imageUrl = node["Image URL"];
+        if (imageUrl) {
             notes.append('div')
                 .on('mouseover', function() {
-                    PlaySoundWithExplicitCheck(node["Explicit"]);
+                    PlaySoundWithExplicitCheck(node);
                 })
                 .on('mouseout', StopSound)
                 .classed('artwork',true)
                 .append('a')
                 .append('img')
-                    .attr('src', node["Image URL"])
+                    .attr('src', imageUrl)
                     .attr('style', "width:200px;height:200px;")
 
         }
@@ -641,13 +665,13 @@ NetWorkDiagram.prototype.nodeClicked = function(node, callback) {
         // the opacity to make it visible.
 
         this.notes.transition().style({'opacity': 1});
-        if (d3.event !== null) { //only triger this for mouse events
+        if (d3.event !== null & this.selectEventHandler != null) { //only triger this for mouse events
             var adjacentTracks = [];
             node.adjacentNodeSelection.each(function(node) {
                 adjacentTracks.push(node["Track Name"]);
             })
             adjacentTracks.push(node["Track Name"]);
-            worksheet.highlightMarksAsync("Track Name", adjacentTracks);
+            this.clickEventHandler("Track Name", adjacentTracks);
         }
     } else {
 
@@ -668,15 +692,19 @@ NetWorkDiagram.prototype.nodeClicked = function(node, callback) {
             .transition()
             .style('opacity', 1)
             .selectAll('text')
-                .style('fill', this.labelFill);
+                .style('fill', labelFill);
 
         // The fill color for the current node's
         // label must also be bundled with its
         // position transition.
 
-        fillColor = this.labelFill;
+        fillColor = labelFill;
 
-        worksheet.clearHighlightedMarksAsync();
+        this.selectedNode = null;
+
+        if (this.deselectEventHandler != null) {
+            this.deselectEventHandler();
+        }
     }
 
     // Toggle the selection state for the node.
@@ -697,7 +725,6 @@ NetWorkDiagram.prototype.nodeClicked = function(node, callback) {
 }
 
 NetWorkDiagram.prototype.edgeClicked = function(edge, idx) {
-
     // Remember the current selection state of the edge.
 
     var selected = edge.selected;
@@ -731,11 +758,55 @@ NetWorkDiagram.prototype.edgeClicked = function(edge, idx) {
 
 };
 
-NetWorkDiagram.prototype.clickNode = function(trackName, callback) {
+NetWorkDiagram.prototype.clickNode = function(trackName) {
     var selectedNode = this.nodeSelection.each(function(node) {
         if (node["Track Name"] === trackName) {
-            nodeSelection.on('click')(node, callback);
+            nodeSelection.on('click')(node);
             return;
         }
     });
+}
+
+NetWorkDiagram.prototype.addOnSelectEventHandler = function(eventHandler) {
+    this.selectEventHandler = eventHandler;
+}
+
+NetWorkDiagram.prototype.addOnDeselectEventHandler = function(eventHandler) {
+    this.deselectEventHandler = eventHandler;
+}
+
+//Utility Methods for Sound Playing
+
+function PlaySoundWithExplicitCheck(node) {
+    explicit = node['Explicit'];
+    if (explicit === 'false') {
+        PlaySound();
+    } else if (node.previouslyCheckedExplicit === false) {
+        $('#myModal').modal('show');
+    } else if (node.previousExplicitCheckResult === true) {
+        PlaySound();
+    }
+}
+
+function setExplicitCheckResult(node, result) {
+    node.previousExplicitCheck = true;
+    node.previousExplicitCheckResult = result;
+}
+
+function PlaySound() {
+    var selectedTrack=document.getElementById("audioPreview");
+    selectedTrack.play();
+
+}
+
+function StopSound() {
+    var selectedTrack=document.getElementById("audioPreview");
+    selectedTrack.pause();
+    selectedTrack.currentTime = 0; //reset track back to beginning
+}
+
+function getColor(value){
+    //value from 0 to 1
+    var hue=((1-value)*120).toString(10);
+    return ["hsl(",hue,",100%,50%)"].join("");
 }
