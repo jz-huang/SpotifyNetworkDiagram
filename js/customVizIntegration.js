@@ -23,7 +23,6 @@ function initTableauViz() {
     viz = new tableau.Viz(containerDiv, url, options);
     viz.addEventListener(tableau.TableauEventName.MARKS_SELECTION, handleSelectionEvent)
     viz.addEventListener(tableau.TableauEventName.FILTER_CHANGE, handleFilterEvent);
-    // Create a viz object and embed it in the container div.
 }
 
 function getDataAndConstructGraph() {
@@ -35,11 +34,11 @@ function getDataAndConstructGraph() {
     };
 
     worksheet.getUnderlyingDataAsync(getDataOptions).then(function(dataTable){
-            setupNetwork(parseTableauData(dataTable));
+            constructGraph(parseTableauData(dataTable));
     });
 }
 
-function setupNetwork(data) {
+function constructGraph(data) {
 	var defaultLinkField = "Danceability";
 	var linkDeltas = {Danceability: 0.05, Energy: 0.05, Speechiness: 0.05};
 	var graphContainer = d3.select('#graph');
@@ -48,7 +47,7 @@ function setupNetwork(data) {
 			'width': 140 + 'px',
 			'height': 600 + 'px'
 		});
-	networkDiagram = new NetWorkDiagram(linkDeltas, graphContainer, notesContainer);
+	networkDiagram = new NetworkDiagram(linkDeltas, graphContainer, notesContainer);
 	networkDiagram.addOnDeselectEventHandler(clearHighlightedTableauMarks);
 	networkDiagram.addOnSelectEventHandler(highlightTableauMarks);
 	networkDiagram.renderNetWork(data, defaultLinkField);
@@ -68,7 +67,7 @@ function setUpDomInteractions() {
 	});
 	$('#properties-dropdown').change(function(event) {
         var property = $(this).val();
-        netWorkDiagram.updateNetWorkLinkProperty(property);
+        networkDiagram.updateNetWorkLinkProperty(property);
     });
 }
 
@@ -118,15 +117,13 @@ function parseTableauData(dataTable) {
     return tracks;
 }
 
-
 //tableau event handlers
 function handleSelectionEvent(selectionEvent) {
     selectionEvent.getMarksAsync().then(function(marks) {
         var pairs = marks[0].getPairs();
         pairs.forEach(function(pair) {
             if (pair.fieldName === "Track Name") {
-                clickNode(pair.value);
-                netWorkDiagram.clickNode(pair.value);
+                networkDiagram.clickNode(pair.value);
             }
         });
     });
@@ -134,7 +131,7 @@ function handleSelectionEvent(selectionEvent) {
 
 function handleFilterEvent(filterEvent) {
     worksheet.getUnderlyingDataAsync(getDataOptions).then(function(dataTable){
-        netWorkDiagram.updateNetWorkData(convertToJSON(dataTable));
+        networkDiagram.updateNetWorkData(convertToJSON(dataTable));
     });
 }
 
