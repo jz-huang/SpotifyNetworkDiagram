@@ -124,38 +124,16 @@
             <h5>Click the "Generate Network Diagram" button to generate a network diagram (created in d3).</h5>
             <h5>Make sure to click and drag nodes, click nodes, and click on node connectors.</h5>
             <br />
-            <button id="generateNetwork" onclick="getDataAndConstructGraph()" class="btn" disabled>Generate Network Diagram</button>
         </div>
 
         <div id="vizContainer" style="width:800px; height:600px;"></div>
 
         <label for="properties-dropdown"> Select Property </label>
-        <select class="form-control" id="properties-dropdown" type="properties-dropdown">
-            <option value="Danceability">Danceability</option>
-            <option value="Energy">Energy</option>
-            <option value="Liveness">Liveness</option>
-        </select>
+
 
         <div id="container">
             <div id="graph"></div>
             <div id="notes"></div>
-        </div>
-
-        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-          <div class="modal-dialog" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h4 class="modal-title" id="myModalLabel">Explicit Content Detected!</h4>
-              </div>
-              <div class="modal-body">
-                This song contains explicit content, you sure you want to proceed to playing?
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-default" id="rejectButton">No, don't play!</button>
-                <button type="button" class="btn btn-primary" id="acceptButton">Keep playing!</button>
-              </div>
-            </div>
-          </div>
         </div>
     </body>
 </html>

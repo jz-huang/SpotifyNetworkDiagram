@@ -13,16 +13,18 @@ function initTableauViz() {
                 $('#generateNetwork').removeAttr("disabled");
 
                 //This is a way around a bug with highlight marks will need to remove this before publishing as sample
+                // worksheet = viz.getWorkbook().getActiveSheet();
+                // worksheet.highlightMarksByPatternMatchAsync("Track Name", "Wild").then(function(){
+                //     worksheet.clearHighlightedMarksAsync();
+                // });
                 worksheet = viz.getWorkbook().getActiveSheet();
-                worksheet.highlightMarksByPatternMatchAsync("Track Name", "Wild").then(function(){
-                    worksheet.clearHighlightedMarksAsync();
-                });
+                getDataAndConstructGraph();
+                viz.addEventListener(tableau.TableauEventName.MARKS_SELECTION, handleSelectionEvent);
             }
         };
 
     viz = new tableau.Viz(containerDiv, url, options);
-    viz.addEventListener(tableau.TableauEventName.MARKS_SELECTION, handleSelectionEvent)
-    viz.addEventListener(tableau.TableauEventName.FILTER_CHANGE, handleFilterEvent);
+    //viz.addEventListener(tableau.TableauEventName.FILTER_CHANGE, handleFilterEvent);
 }
 
 function getDataAndConstructGraph() {
@@ -47,11 +49,11 @@ function constructGraph(data) {
 			'width': 140 + 'px',
 			'height': 600 + 'px'
 		});
-	networkDiagram = new NetworkDiagram(linkDeltas, graphContainer, notesContainer);
-	networkDiagram.addOnDeselectEventHandler(clearHighlightedTableauMarks);
-	networkDiagram.addOnSelectEventHandler(highlightTableauMarks);
-	networkDiagram.renderNetWork(data, defaultLinkField, "Flume");
-	setUpDomInteractions();
+	networkDiagram = new NetworkDiagram(data, linkDeltas, graphContainer, notesContainer);
+	//networkDiagram.addOnDeselectEventHandler(clearHighlightedTableauMarks);
+	//networkDiagram.addOnSelectEventHandler(highlightTableauMarks);
+	//networkDiagram.renderNetWork("Flume");
+	//setUpDomInteractions();
 }
 
 function setUpDomInteractions() {
@@ -117,8 +119,8 @@ function handleSelectionEvent(selectionEvent) {
     selectionEvent.getMarksAsync().then(function(marks) {
         var pairs = marks[0].getPairs();
         pairs.forEach(function(pair) {
-            if (pair.fieldName === "Track Name") {
-                networkDiagram.clickNode(pair.value);
+            if (pair.fieldName === "Artist Name") {
+                networkDiagram.renderNetWork(pair.value);
             }
         });
     });

@@ -1,15 +1,20 @@
 //This file contains most of the logic for the d3 viz, which is represented through an instance
 //of the NetWorkDiagram class.
-var NetworkDiagram = function(deltas, containerDiv, notesDiv) {
+var NetworkDiagram = function(data, deltas, containerDiv, notesDiv) {
     this.deltas = deltas;
     //The main graph container
 	this.graph = containerDiv;
 	this.notes = notesDiv;
+    this.data = data; 
 	//Visual Properties of the graph
 }
 
-NetworkDiagram.prototype.renderNetWork = function(data, linkField, artistName) {
-    this.data = data;
+NetworkDiagram.prototype.renderNetWork = function(artistName) {
+    $('#graph').empty();
+    $('#notes').empty();
+    console.log(artistName);
+    var data = JSON.parse(JSON.stringify(this.data));
+    var linkField = "TODO";
     this.linkField = linkField;
     var linkDelta = this.deltas[linkField];
     var _this = this;
@@ -31,7 +36,7 @@ NetworkDiagram.prototype.renderNetWork = function(data, linkField, artistName) {
     var nodeRadius = 10;
     var selectedNodeRadius = 30;
 
-    var linkDistance = Math.min(width,height)/4;
+    var linkDistance = Math.min(width,height)/10;
 
     // Create the SVG container for the visualization and
     // define its dimensions.
@@ -115,6 +120,10 @@ NetworkDiagram.prototype.renderNetWork = function(data, linkField, artistName) {
             var overlap = _.intersection(selectedNode.festivals, node.festivals);
             return overlap.length > 0;
         });
+        if (selectedNode.children.includes(selectedNode)) {
+            var dupIndex = selectedNode.children.indexOf(selectedNode);
+            selectedNode.children.slice(dupIndex, 1);
+        }
         var leftOverNodes = nodes.filter(function (node) {
             var overlap = _.intersection(selectedNode.festivals, node.festivals);
             return !(overlap.length > 0);
@@ -136,38 +145,53 @@ NetworkDiagram.prototype.renderNetWork = function(data, linkField, artistName) {
         selectedNode.children = selectedNode.children.filter(function(child) {
             return child.keep;
         });
-        selectedNode.children =selectedNode.children.slice(0,6);
-         return leftOverNodes;
+        selectedNode.children = selectedNode.children.slice(0,6);
+        return leftOverNodes;
     };
 
     buildLinks(data, selectedNode, 0);
+
     var filteredData = [];
     var links = [];
     var count = 0;
-    function treeToArray(headNode) {
-        count++;
-        if (count > 100) {
-            console.log("what's up");
-            return;
+    var stack = []; 
+    function treeToArray(node) {
+        stack.push(node);
+        while (stack.length > 0) {
+            var poppedNode = stack.pop();
+            if (poppedNode.visited === true) {
+                continue; 
+            } else {
+                poppedNode.visited = true;
+            }
+            console.log(poppedNode.name);
+            poppedNode.index = filteredData.length;
+            filteredData.push(poppedNode);
+            if (poppedNode.children === undefined || poppedNode.children === null) {
+                continue;
+            }
+            poppedNode.children.forEach(function (child) {
+                stack.push(child);
+            })
         }
-        headNode.index = filteredData.length;
-        filteredData.push(headNode);
-        if (headNode.children === undefined || headNode.children === null) {
-            return;
-        }
-        headNode.children.forEach(function (child) {
-            treeToArray(child);
-            //var commonFestivals = _.intersection(headNode.festivals, child.festivals);
-            links.push({
-                source : headNode.index,
-                target : child.index,
-                link : "Festivals : "
-            });
-        });
     }
 
     treeToArray(selectedNode);
-    console.log(links);
+
+    filteredData.forEach(function(node) {
+        if (node.children === undefined || node.children === null) {
+            return;
+        } else {
+            node.children.forEach(function (child) {
+                var commonFestivals = _.intersection(node.festivals, child.festivals);
+                links.push({
+                    source : node.index,
+                    target: child.index,
+                    link : "Festivals : " + commonFestivals 
+                })
+            })
+        }
+    })
     // Find the graph nodes from the data set. Each
     // album is a separate node
 
@@ -183,7 +207,6 @@ NetworkDiagram.prototype.renderNetWork = function(data, linkField, artistName) {
         node.affliated = entry.affliated;
         node.festivals = entry.festivals;
         var hexColor = entry.affliated ? '#4bf442' : '#ccc';
-        console.log(hexColor);
         node.color = hexColor;
 
         // We'll also copy the musicians, again using
@@ -330,8 +353,19 @@ NetworkDiagram.prototype.renderNetWork = function(data, linkField, artistName) {
         .attr('r', nodeRadius)
         .attr('data-node-index', function(d,i) { return i;})
         .style('fill', function(d, i) {
-            return getColor(d[linkField])
+            return d.color;
         });
+
+    //Make the Center Node Obvious
+    var selectedNode = nodeSelection.filter(function(node) {
+        return node.name === artistName; 
+    })
+
+    selectedNode.select('circle')
+        .attr('r', nodeRadius*2)
+        .style('fill', '#4262f4');
+
+
 
     // Now that we have our main selections (edges and
     // nodes), we can create some subsets of those
