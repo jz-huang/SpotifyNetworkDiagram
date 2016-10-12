@@ -3,7 +3,7 @@ var tableauViz, worksheet, networkDiagram, getDataOptions;
 
 function initTableauViz() {
     var containerDiv = document.getElementById("vizContainer"),
-        url = "http://10.32.134.4/views/SXSWJoin_old/Sheet3?:embed=y&:showShareOptions=true&:display_count=no&:showVizHome=no",
+        url = "http://10.32.134.4/views/SpotifyMusicFestivals/TrackAudioFeatures?:embed=y&:showShareOptions=true&:display_count=no&:showVizHome=no",
         options = {
             hideTabs: true,
             hideToolbar: true,
@@ -35,7 +35,7 @@ function getDataAndConstructGraph() {
 
     worksheet.getUnderlyingDataAsync(getDataOptions).then(function(dataTable){
             constructGraph(parseTableauData(dataTable));
-    });
+    }, function(error) {console.log(error);});
 }
 
 function constructGraph(data) {
@@ -50,7 +50,7 @@ function constructGraph(data) {
 	networkDiagram = new NetworkDiagram(linkDeltas, graphContainer, notesContainer);
 	networkDiagram.addOnDeselectEventHandler(clearHighlightedTableauMarks);
 	networkDiagram.addOnSelectEventHandler(highlightTableauMarks);
-	networkDiagram.renderNetWork(data, defaultLinkField);
+	networkDiagram.renderNetWork(data, defaultLinkField, "Flume");
 	setUpDomInteractions();
 }
 
@@ -74,9 +74,7 @@ function setUpDomInteractions() {
 function parseTableauData(dataTable) {
     var columns = dataTable.getColumns();
     var data = dataTable.getData();
-    var fieldNamesNeeded = ["Album Name", "Artist Name", "Explicit", "Image URL", "Preview Url", "Track Name", "Danceability",
-                      "Energy", "Instrumentalness", "Key", "Liveness", "Loudness", "Popularity", "Tempo", "Valence",
-                      "Time Signature"];
+    var fieldNamesNeeded = ["Festival", "Artist Name", "PAUAffiliate?"];
     var fieldNamesIndexMap = {};
     columns.forEach(function(column) {
         if (fieldNamesNeeded.includes(column.getFieldName()) !== -1) {
@@ -84,37 +82,34 @@ function parseTableauData(dataTable) {
         }
     });
 
-    var tracksMap = {};
+    var artistsMap = {};
     data.forEach(function(rowEntry) {
-        var trackName = rowEntry[fieldNamesIndexMap["Track Name"]].value;
-        //tracks with multiple artists lead to multiple entries for a track in data set
-        if (tracksMap[trackName] !== undefined) {
-            var artistNames = tracksMap[trackName]["Artist Name"];
-            var newArtistName = rowEntry[fieldNamesIndexMap["Artist Name"]].value;
-            if (!artistNames.includes(newArtistName)) {
-                artistNames.push(newArtistName);
+        var artistName = rowEntry[fieldNamesIndexMap["Artist Name"]].value;
+        var affliated = rowEntry[fieldNamesIndexMap["PAUAffiliate?"]].value;
+        var festival = rowEntry[fieldNamesIndexMap["Festival"]].value;
+        var prev = null;
+
+        var artistNode;
+        if (artistName in artistsMap) {
+            artistNode = artistsMap[artistName];
+            if (!artistNode.festivals.includes(festival)) {
+                artistNode.festivals.push(festival);
             }
-            return;
-        }
-        var track = {};
-        for (field in fieldNamesIndexMap) {
-            var fieldIndex = fieldNamesIndexMap[field];
-            var fieldValue = rowEntry[fieldIndex].value;
-            if (field === "Artist Name") {
-                track[field] = [fieldValue];
-            } else {
-                track[field] = fieldValue;
+        } else {
+            artistNode = {
+                name : artistName,
+                affliated : (affliated === "Yes"),
+                festivals : [festival]
             }
+            artistsMap[artistName] = artistNode;
         }
-        tracksMap[trackName] = track;
     });
 
-    var tracks = [];
-    for (var trackName in tracksMap) {
-        tracks.push(tracksMap[trackName]);
+    var artists = [];
+    for (var artistName in artistsMap) {
+        artists.push(artistsMap[artistName]);
     }
-    currentData = tracks;
-    return tracks;
+    return artists;
 }
 
 //tableau event handlers

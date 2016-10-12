@@ -8,8 +8,8 @@ var NetworkDiagram = function(deltas, containerDiv, notesDiv) {
 	//Visual Properties of the graph
 }
 
-NetworkDiagram.prototype.renderNetWork = function(data, linkField) {
-    this.data = data; 
+NetworkDiagram.prototype.renderNetWork = function(data, linkField, artistName) {
+    this.data = data;
     this.linkField = linkField;
     var linkDelta = this.deltas[linkField];
     var _this = this;
@@ -99,10 +99,79 @@ NetworkDiagram.prototype.renderNetWork = function(data, linkField) {
         select.attr('transform', 'translate(' + shiftX + ',' + shiftY + ')');
     };
 
-    // Find the graph nodes from the data set. Each
-    // album is a separate node.
+    //build a graph of connected nodes
+    var selectedNode;
+    data.forEach(function(srcNode, srcIdx, srcList) {
+        if (srcNode.name === artistName) {
+            selectedNode = srcNode;
+        }
+    });
+    var index = 0;
+    function buildLinks(nodes, selectedNode, index) {
+        if (nodes === null || nodes === undefined || nodes.length === 0 || index > 2) {
+            return;
+        }
+        selectedNode.children = nodes.filter(function (node) {
+            var overlap = _.intersection(selectedNode.festivals, node.festivals);
+            return overlap.length > 0;
+        });
+        var leftOverNodes = nodes.filter(function (node) {
+            var overlap = _.intersection(selectedNode.festivals, node.festivals);
+            return !(overlap.length > 0);
+        });
+        selectedNode.children.forEach(function(childNode) {
+            childNode.parent = selectedNode;
+            if (childNode.affliated === true) {
+                childNode.keep = true;
+                childNode.parent.keep = true;
+                return;
+            }
+            leftOverNodes = buildLinks(leftOverNodes, childNode, index+1);
+            if (childNode.keep === true) {
+                childNode.parent.keep = true;
+            }
+        });
 
-    var nodes = data.map(function(entry, idx, list) {
+        //prune off unwanted children
+        selectedNode.children = selectedNode.children.filter(function(child) {
+            return child.keep;
+        });
+        selectedNode.children =selectedNode.children.slice(0,6);
+         return leftOverNodes;
+    };
+
+    buildLinks(data, selectedNode, 0);
+    var filteredData = [];
+    var links = [];
+    var count = 0;
+    function treeToArray(headNode) {
+        count++;
+        if (count > 100) {
+            console.log("what's up");
+            return;
+        }
+        headNode.index = filteredData.length;
+        filteredData.push(headNode);
+        if (headNode.children === undefined || headNode.children === null) {
+            return;
+        }
+        headNode.children.forEach(function (child) {
+            treeToArray(child);
+            //var commonFestivals = _.intersection(headNode.festivals, child.festivals);
+            links.push({
+                source : headNode.index,
+                target : child.index,
+                link : "Festivals : "
+            });
+        });
+    }
+
+    treeToArray(selectedNode);
+    console.log(links);
+    // Find the graph nodes from the data set. Each
+    // album is a separate node
+
+    var nodes = filteredData.map(function(entry, idx, list) {
 
         // This iteration returns a new object for
         // each node.
@@ -110,10 +179,12 @@ NetworkDiagram.prototype.renderNetWork = function(data, linkField) {
         var node = {};
 
         // We retain some of the album's properties.
-        for (var fieldName in entry) {
-            node[fieldName] = entry[fieldName];
-        }
-        node.color = getColor(node[linkField]);
+        node.name = entry.name;
+        node.affliated = entry.affliated;
+        node.festivals = entry.festivals;
+        var hexColor = entry.affliated ? '#4bf442' : '#ccc';
+        console.log(hexColor);
+        node.color = hexColor;
 
         // We'll also copy the musicians, again using
         // a more neutral property. At the risk of
@@ -125,7 +196,8 @@ NetworkDiagram.prototype.renderNetWork = function(data, linkField) {
         // (This may be confusing because D3 refers to
         // the latter as "links."
 
-        node.links = entry[linkField];
+        //node.links = entry[linkField];
+        node.links = entry.festivals;
 
         // As long as we're iterating through the nodes
         // array, take the opportunity to create an
@@ -152,27 +224,28 @@ NetworkDiagram.prototype.renderNetWork = function(data, linkField) {
     // links) "edges" in a nod to the more mathematically
     // minded.
 
-    var links = [];
+    // var links = [];
 
-    // Start by iterating through the albums.
+    // // Start by iterating through the albums.
 
-    data.forEach(function(srcNode, srcIdx, srcList) {
+    // data.forEach(function(srcNode, srcIdx, srcList) {
 
-        // For each album, iterate through the musicians.
+    //     // For each album, iterate through the musicians.
 
-        for (var tgtIdx = srcIdx +1; tgtIdx < srcList.length; tgtIdx++) {
-            var tgtNode = srcList[tgtIdx];
-            var targetValue = parseFloat(tgtNode[linkField]);
-            var srcValue = parseFloat(srcNode[linkField]);
-            if (Math.abs(targetValue-srcValue) < linkDelta) {
-                links.push({
-                    source: srcIdx,
-                    target: tgtIdx,
-                    link: linkField + ": " + srcNode[linkField] + "," + tgtNode[linkField]
-                })
-            }
-        }
-    });
+
+    //     for (var tgtIdx = srcIdx +1; tgtIdx < srcList.length; tgtIdx++) {
+    //         var tgtNode = srcList[tgtIdx];
+    //         var targetValue = parseFloat(tgtNode[linkField]);
+    //         var srcValue = parseFloat(srcNode[linkField]);
+    //         if (Math.abs(targetValue-srcValue) < linkDelta) {
+    //             links.push({
+    //                 source: srcIdx,
+    //                 target: tgtIdx,
+    //                 link: linkField + ": " + srcNode[linkField] + "," + tgtNode[linkField]
+    //             })
+    //         }
+    //     }
+    // });
 
     // Now create the edges for our graph. We do that by
     // eliminating duplicates from the links array.
@@ -372,7 +445,7 @@ NetworkDiagram.prototype.renderNetWork = function(data, linkField) {
 
     labelSelection.append('text')
         .text(function(d, i) {
-            return i % 2 == 0 ? '' : d.node["Track Name"];
+            return i % 2 == 0 ? '' : d.node.name;
         })
         .attr('data-node-index', function(d, i){
             return i % 2 == 0 ? 'none' : Math.floor(i/2);
@@ -452,9 +525,7 @@ NetworkDiagram.prototype.renderNetWork = function(data, linkField) {
             .selectAll('circle')
                 .transition()
                 .attr('r', nodeRadius)
-                .style('fill', function(node, index) {
-                    return getColor(node[linkField]);
-                });
+                .style('fill', node.color);
 
         edgeSelection
             .transition()
@@ -668,16 +739,16 @@ NetworkDiagram.prototype.renderNetWork = function(data, linkField) {
 
     // Handle clicks on the nodes.
 
-    nodeSelection.on('click', nodeClicked);
+    //nodeSelection.on('click', nodeClicked);
 
-    labelSelection.on('click', function(pseudonode) {
-        nodeClicked(pseudonode.node);
-    });
+    //labelSelection.on('click', function(pseudonode) {
+        //nodeClicked(pseudonode.node);
+    //});
 
     // Handle clicks on the edges.
 
-    edgeSelection.on('click', edgeClicked);
-    connectionSelection.on('click', edgeClicked);
+    //edgeSelection.on('click', edgeClicked);
+    //connectionSelection.on('click', edgeClicked);
 
     // Animate the force layout.
 
@@ -687,10 +758,15 @@ NetworkDiagram.prototype.renderNetWork = function(data, linkField) {
         // graph container.
 
         nodeSelection.each(function(node) {
-            node.x = Math.max(node.x, 2*selectedNodeRadius);
-            node.y = Math.max(node.y, 2*selectedNodeRadius);
-            node.x = Math.min(node.x, width-2*selectedNodeRadius);
-            node.y = Math.min(node.y, height-2*selectedNodeRadius);
+            if (node.name === artistName) {
+                node.x = width/2;
+                node.y = height/2;
+            } else {
+                node.x = Math.max(node.x, 2*selectedNodeRadius);
+                node.y = Math.max(node.y, 2*selectedNodeRadius);
+                node.x = Math.min(node.x, width-2*selectedNodeRadius);
+                node.y = Math.min(node.y, height-2*selectedNodeRadius);
+            }
         });
 
         // Kick the label layout to make sure it doesn't
