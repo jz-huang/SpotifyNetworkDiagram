@@ -3,7 +3,7 @@ var tableauViz, worksheet, networkDiagram, getDataOptions;
 
 function initTableauViz() {
     var containerDiv = document.getElementById("vizContainer"),
-        url = "http://10.32.134.4/views/SpotifyMusicFestivals/TrackAudioFeatures?:embed=y&:showShareOptions=true&:display_count=no&:showVizHome=no",
+        url = "http://10.32.134.4/views/SpotifyMusicFestivals_medium/TrackAudioFeatures?:embed=y&:showShareOptions=true&allowFullScreen=false&:jsdebug=y&:display_count=no&:showVizHome=no",
         options = {
             hideTabs: true,
             hideToolbar: true,
@@ -76,10 +76,10 @@ function setUpDomInteractions() {
 function parseTableauData(dataTable) {
     var columns = dataTable.getColumns();
     var data = dataTable.getData();
-    var fieldNamesNeeded = ["Festival", "Artist Name", "PAUAffiliate?"];
+    var fieldNamesNeeded = ["Festival", "Artist Name", "PAUAffiliate?", "PAUAffiliate? (PAUAffiliates medium.csv)"];
     var fieldNamesIndexMap = {};
     columns.forEach(function(column) {
-        if (fieldNamesNeeded.includes(column.getFieldName()) !== -1) {
+        if (fieldNamesNeeded.includes(column.getFieldName())) {
             fieldNamesIndexMap[column.getFieldName()] = column.getIndex();
         }
     });
@@ -87,7 +87,12 @@ function parseTableauData(dataTable) {
     var artistsMap = {};
     data.forEach(function(rowEntry) {
         var artistName = rowEntry[fieldNamesIndexMap["Artist Name"]].value;
-        var affliated = rowEntry[fieldNamesIndexMap["PAUAffiliate?"]].value;
+        var affliated;
+        if (fieldNamesIndexMap["PAUAffiliate?"] !== undefined) {
+            affliated = rowEntry[fieldNamesIndexMap["PAUAffiliate?"]].value;
+        } else {
+            affliated = rowEntry[fieldNamesIndexMap["PAUAffiliate? (PAUAffiliates medium.csv)"]].value;
+        }
         var festival = rowEntry[fieldNamesIndexMap["Festival"]].value;
         var prev = null;
 

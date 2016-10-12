@@ -5,7 +5,7 @@ var NetworkDiagram = function(data, deltas, containerDiv, notesDiv) {
     //The main graph container
 	this.graph = containerDiv;
 	this.notes = notesDiv;
-    this.data = data; 
+    this.data = data;
 	//Visual Properties of the graph
 }
 
@@ -122,7 +122,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
         });
         if (selectedNode.children.includes(selectedNode)) {
             var dupIndex = selectedNode.children.indexOf(selectedNode);
-            selectedNode.children.slice(dupIndex, 1);
+            selectedNode.children.splice(dupIndex, 1);
         }
         var leftOverNodes = nodes.filter(function (node) {
             var overlap = _.intersection(selectedNode.festivals, node.festivals);
@@ -145,7 +145,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
         selectedNode.children = selectedNode.children.filter(function(child) {
             return child.keep;
         });
-        selectedNode.children = selectedNode.children.slice(0,6);
+        //selectedNode.children = selectedNode.children.slice(0, 10);
         return leftOverNodes;
     };
 
@@ -154,13 +154,13 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
     var filteredData = [];
     var links = [];
     var count = 0;
-    var stack = []; 
+    var stack = [];
     function treeToArray(node) {
         stack.push(node);
         while (stack.length > 0) {
             var poppedNode = stack.pop();
             if (poppedNode.visited === true) {
-                continue; 
+                continue;
             } else {
                 poppedNode.visited = true;
             }
@@ -187,7 +187,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
                 links.push({
                     source : node.index,
                     target: child.index,
-                    link : "Festivals : " + commonFestivals 
+                    link : "Festivals : " + commonFestivals
                 })
             })
         }
@@ -358,7 +358,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
 
     //Make the Center Node Obvious
     var selectedNode = nodeSelection.filter(function(node) {
-        return node.name === artistName; 
+        return node.name === artistName;
     })
 
     selectedNode.select('circle')
