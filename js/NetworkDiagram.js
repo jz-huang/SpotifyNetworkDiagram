@@ -34,7 +34,9 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
     var edgeStroke = '#aaa';
     var nodeFill = '#ccc';
     var nodeRadius = 10;
-    var selectedNodeRadius = 30;
+    var selectedNodeRadius = 20;
+    var affliatedLabel = '#ffff00';
+    var targetedLabel = '#008000';
 
     var linkDistance = Math.min(width,height)/10;
 
@@ -206,8 +208,11 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
         node.name = entry.name;
         node.affliated = entry.affliated;
         node.festivals = entry.festivals;
-        var hexColor = entry.affliated ? '#4bf442' : '#ccc';
+        var hexColor = entry.affliated ? affliatedLabel : nodeFill;
         node.color = hexColor;
+        node.parent = filteredData.indexOf(entry.parent);
+        //node.index = idx;
+
 
         // We'll also copy the musicians, again using
         // a more neutral property. At the risk of
@@ -362,8 +367,8 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
     })
 
     selectedNode.select('circle')
-        .attr('r', nodeRadius*2)
-        .style('fill', '#4262f4');
+        .attr('r', selectedNodeRadius)
+        .style('fill', targetedLabel);
 
 
 
@@ -530,6 +535,9 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
     // Function to handle clicks on node elements
 
     var nodeClicked = function(node) {
+        if (node.name === artistName || node.affliated === false) {
+            return;
+        }
 
         // Ignore events based on dragging.
 
@@ -559,7 +567,18 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
             .selectAll('circle')
                 .transition()
                 .attr('r', nodeRadius)
-                .style('fill', node.color);
+                .style('fill', function(d, i) {
+                    return d.color;
+                });
+
+        var selectedNodeOnClick = nodeSelection.filter(function(node) {
+            return node.name === artistName;
+        })
+
+        selectedNodeOnClick.select('circle')
+            .transition()
+            .attr('r', selectedNodeRadius)
+            .style('fill', targetedLabel);
 
         edgeSelection
             .transition()
@@ -580,25 +599,70 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
 
             // First we transition the incident edges.
 
-            node.incidentEdgeSelection
-                .transition()
-                .style('stroke', node.color);
+            // node.incidentEdgeSelection
+            //     .transition()
+            //     .style('stroke', node.color);
+            // node.incidentEdgeSelection
+            //     .each( function (edge) {
+            //         var bool = (nodes[edge.source] === node && edge.target === node.parent) ||
+            //             (nodes[edge.target] === node && edge.source === node.parent);
+            //         if (bool) {
+            //             edge.transition().style('stroke', targetedLabel);
+            //         }
+            //     });
+
+            // find all the nodes up till the parent
+            // find the edeges that we want to change
+            var currNode = node;
+            var connectedNodes = [];
+            var connectedEdges = [];
+            var parentNode = null;
+            while (currNode.parent != -1) {
+                parentNode = nodes[currNode.parent];
+                connectedNodes.push(currNode);
+                var edge = currNode.incidentEdgeSelection.filter(function(edge) {
+                    return (edge.source === currNode && edge.target === parentNode) ||
+                        (edge.target === currNode && edge.source === parentNode);
+                });
+                connectedEdges.push(edge);
+                currNode = parentNode;
+            }
+            //connectedNodes.push(parentNode);
+
+            // Now we transition conencted edges
+            connectedEdges.forEach(function (connectedEdge) {
+                connectedEdge
+                    .transition()
+                    .style('stroke', targetedLabel);
+            });
 
             // Now we transition the adjacent nodes.
 
-            node.adjacentNodeSelection.selectAll('circle')
-                .transition()
-                .attr('r', nodeRadius)
-                .style('fill', node.color);
+            connectedNodes.forEach(function (connectedNode) {
+                d3.selectAll('circle[data-node-index="' + connectedNode.index + '"]')
+                    .transition()
+                    //.attr('r', selectedNodeRadius)
+                    .style('fill', targetedLabel);
+            });
+
+            // node.adjacentNodeSelection.selectAll('circle')
+            //     .transition()
+            //     .attr('r', nodeRadius)
+            //     .style('fill', node.color);
 
             labelSelection
                 .filter(function(label) {
                     var adjacent = false;
-                    node.adjacentNodeSelection.each(function(d){
-                        if (label.node === d) {
+                    connectedNodes.forEach(function(connectedNode){
+                        if (label.node === connectedNode){
                             adjacent = true;
                         }
-                    })
+                    });
+                    // node.adjacentNodeSelection.each(function(d){
+                    //     if (label.node === d) {
+                    //         adjacent = true;
+                    //     }
+                    // })
                     return adjacent;
                 })
                 .transition()
@@ -608,15 +672,15 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
 
             // And finally, transition the node itself.
 
-            d3.selectAll('circle[data-node-index="'+node.index+'"]')
-                .transition()
-                .attr('r', selectedNodeRadius)
-                .style('fill', node.color);
+            // d3.selectAll('circle[data-node-index="'+node.index+'"]')
+            //     .transition()
+            //     .attr('r', selectedNodeRadius)
+            //     .style('fill', node.color);
 
             // Make sure the node's label is visible
 
             labelSelection
-                .filter(function(label) {return label.node === node;})
+                .filter(function(label) {return label.node.name === artistName;})
                 .transition()
                 .style('opacity', 1);
 
@@ -625,74 +689,74 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
 
             fillColor = node.text;
 
-            _this.selectedNode = node;
-            node.previousExplicitCheck = false;
-            node.previousExplicitCheckResult = false;
+            // _this.selectedNode = node;
+            // node.previousExplicitCheck = false;
+            // node.previousExplicitCheckResult = false;
 
             // Delete the current notes section to prepare
             // for new information.
 
-            _this.notes.selectAll('*').remove();
+            // _this.notes.selectAll('*').remove();
 
-            // Fill in the notes section with informationm
-            // from the node. Because we want to transition
-            // this to match the transitions on the graph,
-            // we first set it's opacity to 0.
+            // // Fill in the notes section with informationm
+            // // from the node. Because we want to transition
+            // // this to match the transitions on the graph,
+            // // we first set it's opacity to 0.
 
-            _this.notes.style({'opacity': 0});
+            // _this.notes.style({'opacity': 0});
 
-            // Now add the notes content.
-            _this.notes.append('audio')
-                    .attr('id', 'audioPreview')
-                    .attr('src', node["Preview Url"]);
+            // // Now add the notes content.
+            // _this.notes.append('audio')
+            //         .attr('id', 'audioPreview')
+            //         .attr('src', node["Preview Url"]);
 
-            _this.notes.append('h1').text(node["Track Name"]);
-            _this.notes.append('h2').text("Album: " + node["Album Name"]);
-            var imageUrl = node["Image URL"];
-            if (imageUrl) {
-                _this.notes.append('div')
-                    .on('mouseover', function() {
-                        PlaySoundWithExplicitCheck(node);
-                    })
-                    .on('mouseout', StopSound)
-                    .classed('artwork',true)
-                    .append('a')
-                    .append('img')
-                        .attr('src', imageUrl)
-                        .attr('style', "width:200px;height:200px;")
+            // _this.notes.append('h1').text(node["Track Name"]);
+            // _this.notes.append('h2').text("Album: " + node["Album Name"]);
+            // var imageUrl = node["Image URL"];
+            // if (imageUrl) {
+            //     _this.notes.append('div')
+            //         .on('mouseover', function() {
+            //             PlaySoundWithExplicitCheck(node);
+            //         })
+            //         .on('mouseout', StopSound)
+            //         .classed('artwork',true)
+            //         .append('a')
+            //         .append('img')
+            //             .attr('src', imageUrl)
+            //             .attr('style', "width:200px;height:200px;")
 
-            }
-            _this.notes.append('br');
+            // }
+            // _this.notes.append('br');
 
-            var list = _this.notes.append('ul').text("Artists: ");
-            node["Artist Name"].forEach(function(link){
-                list.append('li')
-                    .text(link);
-            });
+            // var list = _this.notes.append('ul').text("Artists: ");
+            // node["Artist Name"].forEach(function(link){
+            //     list.append('li')
+            //         .text(link);
+            // });
 
-            // With the content in place, transition
-            // the opacity to make it visible.
+            // // With the content in place, transition
+            // // the opacity to make it visible.
 
-            _this.notes.transition().style({'opacity': 1});
-            if (d3.event !== null & _this.selectEventHandler !== null) { //only triger this for mouse events
-                var adjacentTracks = [];
-                node.adjacentNodeSelection.each(function(node) {
-                    adjacentTracks.push(node["Track Name"]);
-                })
-                adjacentTracks.push(node["Track Name"]);
-                _this.selectEventHandler(adjacentTracks);
-            }
+            // _this.notes.transition().style({'opacity': 1});
+            // if (d3.event !== null & _this.selectEventHandler !== null) { //only triger this for mouse events
+            //     var adjacentTracks = [];
+            //     node.adjacentNodeSelection.each(function(node) {
+            //         adjacentTracks.push(node["Track Name"]);
+            //     })
+            //     adjacentTracks.push(node["Track Name"]);
+            //     _this.selectEventHandler(adjacentTracks);
+            // }
         } else {
 
             // Since we're de-selecting the current
             // node, transition the notes section
             // and then remove it.
 
-            _this.notes.transition()
-                .style({'opacity': 0})
-                .each('end', function(){
-                    _this.notes.selectAll('*').remove();
-                });
+            // _this.notes.transition()
+            //     .style({'opacity': 0})
+            //     .each('end', function(){
+            //         _this.notes.selectAll('*').remove();
+            //     });
 
             // Transition all the labels to their
             // default styles.
@@ -709,7 +773,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
 
             fillColor = labelFill;
 
-            _this.selectedNode = null;
+            //_this.selectedNode = null;
 
             if (_this.deselectEventHandler != null) {
                 _this.deselectEventHandler();
@@ -773,11 +837,11 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
 
     // Handle clicks on the nodes.
 
-    //nodeSelection.on('click', nodeClicked);
+    nodeSelection.on('click', nodeClicked);
 
-    //labelSelection.on('click', function(pseudonode) {
-        //nodeClicked(pseudonode.node);
-    //});
+    labelSelection.on('click', function(pseudonode) {
+        nodeClicked(pseudonode.node);
+    });
 
     // Handle clicks on the edges.
 
