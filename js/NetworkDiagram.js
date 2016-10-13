@@ -22,7 +22,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
     // a size that's convenient for displaying the graphic on
     // http://bl.ocks.org
 
-    var width = 800,
+    var width = 600,
         height = 600;
 
     // Visual properties of the graph are next. We need to make
@@ -35,7 +35,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
     var nodeFill = '#ccc';
     var nodeRadius = 10;
     var selectedNodeRadius = 20;
-    var affliatedLabel = '#ffff00';
+    var affliatedLabel = '#fcffa5';
     var targetedLabel = '#008000';
 
     var linkDistance = Math.min(width,height)/10;
