@@ -32,11 +32,13 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
     var labelFill = '#444';
     var adjLabelFill = '#aaa';
     var edgeStroke = '#aaa';
-    var nodeFill = '#ccc';
     var nodeRadius = 10;
     var selectedNodeRadius = 20;
+
+    //For Ben to play with
     var affliatedLabel = '#fcffa5';
     var targetedLabel = '#008000';
+    var nodeFill = '#ccc';
 
     var linkDistance = Math.min(width,height)/20;
 
