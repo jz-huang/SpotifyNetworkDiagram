@@ -925,9 +925,9 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
 
     // Handle clicks on the nodes.
 
-    nodeSelection.on('dblclick', nodeClicked);
+    nodeSelection.on('click', nodeClicked);
 
-    labelSelection.on('dblclick', function(pseudonode) {
+    labelSelection.on('click', function(pseudonode) {
         nodeClicked(pseudonode.node);
     });
 
