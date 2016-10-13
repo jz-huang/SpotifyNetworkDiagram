@@ -3,7 +3,7 @@ var tableauViz, worksheet, networkDiagram, getDataOptions;
 
 function initTableauViz() {
     var containerDiv = document.getElementById("vizContainer"),
-        url = "http://10.32.134.4/views/SpotifyMusicFestivals_medium/TrackAudioFeatures?:embed=y&:showShareOptions=true&allowFullScreen=false&:jsdebug=y&:display_count=no&:showVizHome=no",
+        url = "http://10.32.134.4/views/SpotifyMusicFestivals_small/TrackAudioFeatures?:embed=y&:showShareOptions=true&:display_count=no&:showVizHome=no",
         options = {
             hideTabs: true,
             hideToolbar: true,

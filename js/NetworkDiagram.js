@@ -38,7 +38,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
     var affliatedLabel = '#fcffa5';
     var targetedLabel = '#008000';
 
-    var linkDistance = Math.min(width,height)/10;
+    var linkDistance = Math.min(width,height)/20;
 
     // Create the SVG container for the visualization and
     // define its dimensions.
@@ -115,7 +115,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
     });
     var index = 0;
     function buildLinks(nodes, selectedNode, index) {
-        if (nodes === null || nodes === undefined || nodes.length === 0 || index > 2) {
+        if (nodes === null || nodes === undefined || nodes.length === 0 || index > 3) {
             return;
         }
         selectedNode.children = nodes.filter(function (node) {
@@ -151,7 +151,79 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
         return leftOverNodes;
     };
 
-    buildLinks(data, selectedNode, 0);
+    function breadthFirstBuildLinks(nodes, selectedNode, maxDepth) {
+        var stack = [];
+        selectedNode.depth = 0;
+        stack.push(selectedNode);
+        var currNode;
+        var leftOverNodes = nodes;
+        while (stack.length > 0) {
+            currNode = stack.pop();
+            if (currNode.depth > maxDepth) {
+                continue;
+            }
+
+            currNode.children = leftOverNodes.filter(function (node) {
+                var overlap = _.intersection(currNode.festivals, node.festivals);
+                return overlap.length > 0;
+            });
+
+            if (currNode.children.includes(currNode)) {
+                var dupIndex = currNode.children.indexOf(currNode);
+                currNode.children.splice(dupIndex, 1);
+            }
+
+            leftOverNodes = leftOverNodes.filter(function (node) {
+                var overlap = _.intersection(currNode.festivals, node.festivals);
+                return !(overlap.length > 0);
+            });
+
+            currNode.children.forEach(function(child) {
+                child.parent = currNode;
+                child.depth = currNode.depth + 1;
+                if (child.affliated === true) {
+                    child.keep = true;
+                    var curr = child;
+                    while (curr.parent !== undefined && curr.parent.keep !== true) {
+                        curr.parent.keep = true;
+                        curr = curr.parent;
+                    }
+                    return;
+                } else {
+                    stack.push(child);
+                }
+            });
+        }
+    }
+
+    function removeUncessaryNodes(headNode) {
+        var stack = [];
+        stack.push(headNode);
+        var currNode;
+        while (stack.length > 0) {
+            currNode = stack.pop();
+            if (currNode.children === undefined || currNode.children === null || currNode.children.length === 0) {
+                continue;
+            }
+            currNode.children = currNode.children.filter(function (node) {
+                return node.keep;
+            });
+            currNode.children.forEach(function(child) {
+                stack.push(child);
+            });
+        }
+    }
+
+    function hideImmediateConnections(headNode) {
+        headNode.children = headNode.children.filter(function(child) {
+            return !child.affliated;
+        });
+    }
+
+    breadthFirstBuildLinks(data, selectedNode, 4);
+    removeUncessaryNodes(selectedNode);
+    //hideImmediateConnections(selectedNode);
+    //buildLinks(data, selectedNode, 0);
 
     var filteredData = [];
     var links = [];
@@ -515,6 +587,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
         .nodes(nodes)
         .links(edges)
         .linkDistance(linkDistance)
+        .linkStrength(0.9)
         .charge(-500);
 
     // Create the force layout for the labels.
@@ -852,9 +925,9 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
 
     // Handle clicks on the nodes.
 
-    nodeSelection.on('click', nodeClicked);
+    nodeSelection.on('dblclick', nodeClicked);
 
-    labelSelection.on('click', function(pseudonode) {
+    labelSelection.on('dblclick', function(pseudonode) {
         nodeClicked(pseudonode.node);
     });
 
