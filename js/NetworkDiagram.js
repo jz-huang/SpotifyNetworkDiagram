@@ -12,7 +12,7 @@ var NetworkDiagram = function(data, deltas, containerDiv, notesDiv) {
 NetworkDiagram.prototype.renderNetWork = function(artistName) {
     $('#graph').empty();
     $('#notes').empty();
-    console.log(artistName);
+    //console.log(artistName);
     var data = JSON.parse(JSON.stringify(this.data));
     var linkField = "TODO";
     this.linkField = linkField;
@@ -238,7 +238,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
             } else {
                 poppedNode.visited = true;
             }
-            console.log(poppedNode.name);
+            //console.log(poppedNode.name);
             poppedNode.index = filteredData.length;
             filteredData.push(poppedNode);
             if (poppedNode.children === undefined || poppedNode.children === null) {
@@ -741,7 +741,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
                 .transition()
                 .style('opacity', 1)
                 .selectAll('text')
-                    .style('fill', adjLabelFill);
+                    .style('fill', labelFill);
 
             // And finally, transition the node itself.
 
