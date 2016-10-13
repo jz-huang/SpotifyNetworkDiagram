@@ -689,6 +689,21 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
 
             fillColor = node.text;
 
+            // connectionSelection.filter(function (connection) {
+            //     var retVal = false;
+            //     connectedEdges.forEach(function (edge) {
+            //         edge.each(function (e) {
+            //             if (connection === e) {
+            //                 retVal = true;
+            //             }
+            //         })
+            //     });
+            //     return retVal;
+            // }).classed('hidden', false)
+            //     .style('opacity', 0)
+            //     .transition()
+            //     .style('opacity', 1);
+
             // _this.selectedNode = node;
             // node.previousExplicitCheck = false;
             // node.previousExplicitCheckResult = false;
@@ -845,8 +860,8 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
 
     // Handle clicks on the edges.
 
-    //edgeSelection.on('click', edgeClicked);
-    //connectionSelection.on('click', edgeClicked);
+    edgeSelection.on('click', edgeClicked);
+    connectionSelection.on('click', edgeClicked);
 
     // Animate the force layout.
 
