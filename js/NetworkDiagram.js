@@ -36,9 +36,9 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
     var selectedNodeRadius = 20;
 
     //For Ben to play with
-    var affliatedLabel = '#fcffa5';
-    var targetedLabel = '#008000';
-    var nodeFill = '#ccc';
+    var affliatedLabel = '#006699';
+    var targetedLabel = '#ff8c1a';
+    var nodeFill = '#94b8b8';//'#669999';
 
     var linkDistance = Math.min(width,height)/20;
 
@@ -437,6 +437,8 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
         .style('fill', function(d, i) {
             return d.color;
         });
+    // nodeSelection.append('image')
+    //     .attr('')
 
     //Make the Center Node Obvious
     var selectedNode = nodeSelection.filter(function(node) {
