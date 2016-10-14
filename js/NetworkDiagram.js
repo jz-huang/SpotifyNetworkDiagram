@@ -9,7 +9,7 @@ var NetworkDiagram = function(data, deltas, containerDiv, notesDiv) {
 	//Visual Properties of the graph
 }
 
-NetworkDiagram.prototype.renderNetWork = function(artistName) {
+NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
     $('#graph').empty();
     $('#notes').empty();
     //console.log(artistName);
@@ -287,6 +287,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
         var hexColor = entry.affliated ? affliatedLabel : nodeFill;
         node.color = hexColor;
         node.parent = filteredData.indexOf(entry.parent);
+        node.festivalInfoMap = entry.festivalInfoMap;
         //node.index = idx;
 
 
@@ -1020,6 +1021,12 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
     force.start();
     labelForce.start();
 
+    // Get Artist Info For this Festival
+    var selectedArtist = selectedNode.data()[0];
+    if (currFestival === null || currFestival === undefined) {
+        currFestival = selectedArtist.festivals[0];
+    }
+    var festivalInfo = selectedArtist.festivalInfoMap[currFestival];
     //create note page
     this.notes.selectAll('*').remove();
 
@@ -1033,16 +1040,14 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
     // Now add the notes content.
     this.notes.append('audio')
             .attr('id', 'audioPreview')
-            .attr('src', node["Preview Url"]);
+            .attr('src', festivalInfo.trackPreviewUrl);
 
-    _this.notes.append('h1').text(node["Track Name"]);
-    _this.notes.append('h2').text("Album: " + node["Album Name"]);
-    var imageUrl = node["Image URL"];
+    this.notes.append('h1').text(selectedArtist.name);
+    this.notes.append('h2').text("Album: " + festivalInfo.trackAlbum);
+    var imageUrl = festivalInfo.imageUrl;
     if (imageUrl) {
-        _this.notes.append('div')
-            .on('mouseover', function() {
-                PlaySoundWithExplicitCheck(node);
-            })
+        this.notes.append('div')
+            .on('mouseover', PlaySound)
             .on('mouseout', StopSound)
             .classed('artwork',true)
             .append('a')
@@ -1051,13 +1056,14 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
                 .attr('style', "width:200px;height:200px;")
 
     }
-    _this.notes.append('br');
+    this.notes.append('br');
 
-    var list = _this.notes.append('ul').text("Artists: ");
-    node["Artist Name"].forEach(function(link){
+    var list = this.notes.append('ul').text("Festivals: ");
+    selectedArtist.festivals.forEach(function(link){
         list.append('li')
             .text(link);
     });
+    this.notes.transition().style({'opacity': 1});
 }
 
 NetworkDiagram.prototype.updateNetWorkData = function(data) {

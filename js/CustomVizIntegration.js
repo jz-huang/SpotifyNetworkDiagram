@@ -101,7 +101,7 @@ function parseTableauData(dataTable) {
         var festivalInfo = {};
         festivalInfo.trackPreviewUrl = trackPreviewUrl;
         festivalInfo.trackAlbum = trackAlbum;
-        festivalInfo.imageURL = imageURL;
+        festivalInfo.imageUrl = imageURL;
 
         var artistNode;
         if (artistName in artistsMap) {
@@ -137,13 +137,18 @@ function handleSelectionEvent(selectionEvent) {
         var artistName;
         pairs.forEach(function(pair) {
             if (pair.fieldName === "Artist Name") {
-                networkDiagram.renderNetWork(pair.value);
+                //networkDiagram.renderNetWork(pair.value);
                 artistName = pair.value;
             }
         });
-        // worksheet.getFiltersAsync().then(function (filters) {
-        //     if (filters)
-        // })
+        worksheet.getFiltersAsync().then(function (filters) {
+             if (filters !== undefined && filters !== null && filters[0].getAppliedValues().length === 1) {
+                var currFestival = filters[0].getAppliedValues()[0].value;
+                networkDiagram.renderNetWork(artistName, currFestival);
+             } else {
+                networkDiagram.renderNetWork(artistName);
+             }
+        });
     });
 }
 
