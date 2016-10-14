@@ -76,7 +76,8 @@ function setUpDomInteractions() {
 function parseTableauData(dataTable) {
     var columns = dataTable.getColumns();
     var data = dataTable.getData();
-    var fieldNamesNeeded = ["Festival", "Artist Name", "PAUAffiliate?", "PAUAffiliate? (PAUAffiliates medium.csv)"];
+    var fieldNamesNeeded = ["Festival", "Artist Name", "PAUAffiliate?", "PAUAffiliate? (PAUAffiliates medium.csv)",
+                            "Track Preview URL", "Album Name", "Album Image URL"];
     var fieldNamesIndexMap = {};
     columns.forEach(function(column) {
         if (fieldNamesNeeded.includes(column.getFieldName())) {
@@ -94,19 +95,29 @@ function parseTableauData(dataTable) {
             affliated = rowEntry[fieldNamesIndexMap["PAUAffiliate? (PAUAffiliates medium.csv)"]].value;
         }
         var festival = rowEntry[fieldNamesIndexMap["Festival"]].value;
-        var prev = null;
+        var trackPreviewUrl = rowEntry[fieldNamesIndexMap["Track Preview URL"]].value;
+        var trackAlbum = rowEntry[fieldNamesIndexMap["Album Name"]].value;
+        var imageURL = rowEntry[fieldNamesIndexMap["Album Image URL"]].value;
+        var festivalInfo = {};
+        festivalInfo.trackPreviewUrl = trackPreviewUrl;
+        festivalInfo.trackAlbum = trackAlbum;
+        festivalInfo.imageURL = imageURL;
 
         var artistNode;
         if (artistName in artistsMap) {
             artistNode = artistsMap[artistName];
             if (!artistNode.festivals.includes(festival)) {
                 artistNode.festivals.push(festival);
+                artistNode.festivalInfoMap[festival] = festivalInfo;
             }
         } else {
+            festivalInfoMap = {};
+            festivalInfoMap[festival] = festivalInfo;
             artistNode = {
                 name : artistName,
                 affliated : (affliated === "Yes"),
-                festivals : [festival]
+                festivals : [festival],
+                festivalInfoMap : festivalInfoMap
             }
             artistsMap[artistName] = artistNode;
         }
@@ -123,11 +134,16 @@ function parseTableauData(dataTable) {
 function handleSelectionEvent(selectionEvent) {
     selectionEvent.getMarksAsync().then(function(marks) {
         var pairs = marks[0].getPairs();
+        var artistName;
         pairs.forEach(function(pair) {
             if (pair.fieldName === "Artist Name") {
                 networkDiagram.renderNetWork(pair.value);
+                artistName = pair.value;
             }
         });
+        // worksheet.getFiltersAsync().then(function (filters) {
+        //     if (filters)
+        // })
     });
 }
 

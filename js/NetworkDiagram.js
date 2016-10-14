@@ -105,6 +105,8 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
         if (fillColor) {
             select = select.transition().style('fill', fillColor);
         }
+        shiftX = shiftX*0.5;
+        shiftY = shiftY*0.5;
         select.attr('transform', 'translate(' + shiftX + ',' + shiftY + ')');
     };
 
@@ -562,7 +564,8 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
         })
         .attr('data-node-index', function(d, i){
             return i % 2 == 0 ? 'none' : Math.floor(i/2);
-        });
+        })
+        .style('font-size', '12px');
 
     // The last bit of markup are the lists of
     // connections for each link.
@@ -1016,6 +1019,45 @@ NetworkDiagram.prototype.renderNetWork = function(artistName) {
     // Start the layout computations.
     force.start();
     labelForce.start();
+
+    //create note page
+    this.notes.selectAll('*').remove();
+
+    // Fill in the notes section with informationm
+    // from the node. Because we want to transition
+    // this to match the transitions on the graph,
+    // we first set it's opacity to 0.
+
+    this.notes.style({'opacity': 0});
+
+    // Now add the notes content.
+    this.notes.append('audio')
+            .attr('id', 'audioPreview')
+            .attr('src', node["Preview Url"]);
+
+    _this.notes.append('h1').text(node["Track Name"]);
+    _this.notes.append('h2').text("Album: " + node["Album Name"]);
+    var imageUrl = node["Image URL"];
+    if (imageUrl) {
+        _this.notes.append('div')
+            .on('mouseover', function() {
+                PlaySoundWithExplicitCheck(node);
+            })
+            .on('mouseout', StopSound)
+            .classed('artwork',true)
+            .append('a')
+            .append('img')
+                .attr('src', imageUrl)
+                .attr('style', "width:200px;height:200px;")
+
+    }
+    _this.notes.append('br');
+
+    var list = _this.notes.append('ul').text("Artists: ");
+    node["Artist Name"].forEach(function(link){
+        list.append('li')
+            .text(link);
+    });
 }
 
 NetworkDiagram.prototype.updateNetWorkData = function(data) {
