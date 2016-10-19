@@ -40,7 +40,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
     var targetedLabel = '#ff8c1a';
     var nodeFill = '#94b8b8';//'#669999';
 
-    var linkDistance = Math.min(width,height)/20;
+    var linkDistance = Math.min(width,height)/10;
 
     // Create the SVG container for the visualization and
     // define its dimensions.
@@ -105,8 +105,8 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
         if (fillColor) {
             select = select.transition().style('fill', fillColor);
         }
-        shiftX = shiftX*0.5;
-        shiftY = shiftY*0.5;
+        shiftX = shiftX*0.7;
+        shiftY = shiftY*0.7;
         select.attr('transform', 'translate(' + shiftX + ',' + shiftY + ')');
     };
 
@@ -595,8 +595,15 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
         .nodes(nodes)
         .links(edges)
         .linkDistance(linkDistance)
-        .linkStrength(0.9)
-        .charge(-500);
+        .linkStrength(2);
+
+    force.charge(function(node) {
+        if (node.name === artistName){
+            return -1000;
+        } else {
+            return -500;
+        }
+    })
 
     // Create the force layout for the labels.
 
@@ -606,8 +613,8 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
         .links(labelLinks)
         .gravity(0)
         .linkDistance(0)
-        .linkStrength(0.8)
-        .charge(-100);
+        .linkStrength(0.5)
+        .charge(-50);
 
     // Let users drag the nodes.
 
