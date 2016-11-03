@@ -1,32 +1,29 @@
 //This files contains most of the logic for tableau viz and d3 viz integration
 var tableauViz, worksheet, networkDiagram, getDataOptions;
+var initialFestival = null;
 
 function initTableauViz() {
     var containerDiv = document.getElementById("vizContainer"),
-        url = "http://10.32.134.4/views/SpotifyMusicFestivals_small/TrackAudioFeatures?:embed=y&:showShareOptions=true&:display_count=no&:showVizHome=no",
+        url = "http://jahuang2/views/SpotifyMusicFestivals/TrackAudioFeatures?:embed=y&:showShareOptions=true&:commentingEnabled=true&:display_count=no&:showVizHome=no",
         options = {
             hideTabs: true,
             hideToolbar: true,
             allowFullScreen: false,
             onFirstInteractive: function () {
-                // enable our button once the viz is ready
-                $('#generateNetwork').removeAttr("disabled");
-
-                //This is a way around a bug with highlight marks will need to remove this before publishing as sample
-                // worksheet = viz.getWorkbook().getActiveSheet();
-                // worksheet.highlightMarksByPatternMatchAsync("Track Name", "Wild").then(function(){
-                //     worksheet.clearHighlightedMarksAsync();
-                // });
                 worksheet = viz.getWorkbook().getActiveSheet();
+                //Ideally we would want an option to ignore filters when using Get Data. 
+                //This is a work around, we get the filters store them, clear filters to get the full Data-set
+                // And reply the filter afterwards
                 getDataAndConstructGraph();
-                viz.addEventListener(tableau.TableauEventName.MARKS_SELECTION, handleSelectionEvent);
+                viz.addEventListener(tableau.TableauEventName.MARKS_SELECTION, handleSelectionEvent); 
+                viz.addEventListener(tableau.TableauEventName.FILTER_CHANGE, handleFilterEvent);
             }
         };
 
     viz = new tableau.Viz(containerDiv, url, options);
-    //viz.addEventListener(tableau.TableauEventName.FILTER_CHANGE, handleFilterEvent);
 }
 
+//Uses the Get Data API to extract Data from Viz, parse Data and Construct D3 Diagram
 function getDataAndConstructGraph() {
     getDataOptions = {
     	maxRows: 0,
@@ -34,50 +31,29 @@ function getDataAndConstructGraph() {
     	ignoreSelection: true,
     	includeAllColumns: true
     };
-
     worksheet.getUnderlyingDataAsync(getDataOptions).then(function(dataTable){
             constructGraph(parseTableauData(dataTable));
     }, function(error) {console.log(error);});
 }
 
+//Set up the d3 diagram
 function constructGraph(data) {
 	var defaultLinkField = "Danceability";
-	var linkDeltas = {Danceability: 0.05, Energy: 0.05, Speechiness: 0.05};
 	var graphContainer = d3.select('#graph');
 	var notesContainer = d3.select('#notes')
 		.style({
 			'width': 140 + 'px',
 			'height': 600 + 'px'
 		});
-	networkDiagram = new NetworkDiagram(data, linkDeltas, graphContainer, notesContainer);
-	//networkDiagram.addOnDeselectEventHandler(clearHighlightedTableauMarks);
-	//networkDiagram.addOnSelectEventHandler(highlightTableauMarks);
-	//networkDiagram.renderNetWork("Flume");
-	//setUpDomInteractions();
+	networkDiagram = new NetworkDiagram(data, graphContainer, notesContainer);
 }
 
-function setUpDomInteractions() {
-	$('#acceptButton').click(function() {
-		if (networkDiagram.selectedNode !== null) {
-			setExplicitCheckResult(networkDiagram.selectedNode, true);
-		}
-	});
-	$('#rejectButton').click(function() {
-		if (networkDiagram.selectedNode !== null) {
-			setExplicitCheckResult(networkDiagram.selectedNode, false);
-		}
-	});
-	$('#properties-dropdown').change(function(event) {
-        var property = $(this).val();
-        networkDiagram.updateNetWorkLinkProperty(property);
-    });
-}
-
+//Parse the Data into the format expected
 function parseTableauData(dataTable) {
     var columns = dataTable.getColumns();
     var data = dataTable.getData();
-    var fieldNamesNeeded = ["Festival", "Artist Name", "PAUAffiliate?", "PAUAffiliate? (PAUAffiliates medium.csv)",
-                            "Track Preview URL", "Album Name", "Album Image URL"];
+    var fieldNamesNeeded = ["Festival", "Artist Name", "PAUAffiliate?", "Track Preview URL", 
+                            "Album Name", "Album Image URL"];
     var fieldNamesIndexMap = {};
     columns.forEach(function(column) {
         if (fieldNamesNeeded.includes(column.getFieldName())) {
@@ -88,12 +64,7 @@ function parseTableauData(dataTable) {
     var artistsMap = {};
     data.forEach(function(rowEntry) {
         var artistName = rowEntry[fieldNamesIndexMap["Artist Name"]].value;
-        var affliated;
-        if (fieldNamesIndexMap["PAUAffiliate?"] !== undefined) {
-            affliated = rowEntry[fieldNamesIndexMap["PAUAffiliate?"]].value;
-        } else {
-            affliated = rowEntry[fieldNamesIndexMap["PAUAffiliate? (PAUAffiliates medium.csv)"]].value;
-        }
+        var affliated = rowEntry[fieldNamesIndexMap["PAUAffiliate?"]].value;
         var festival = rowEntry[fieldNamesIndexMap["Festival"]].value;
         var trackPreviewUrl = rowEntry[fieldNamesIndexMap["Track Preview URL"]].value;
         var trackAlbum = rowEntry[fieldNamesIndexMap["Album Name"]].value;
@@ -131,38 +102,33 @@ function parseTableauData(dataTable) {
 }
 
 //tableau event handlers
+//Update the network with selected artist and current festival.
 function handleSelectionEvent(selectionEvent) {
     selectionEvent.getMarksAsync().then(function(marks) {
         var pairs = marks[0].getPairs();
         var artistName;
         pairs.forEach(function(pair) {
             if (pair.fieldName === "Artist Name") {
-                //networkDiagram.renderNetWork(pair.value);
                 artistName = pair.value;
             }
         });
+
+        //For artists that have attended multiple festivals, we want to match the sound track to the festival
         worksheet.getFiltersAsync().then(function (filters) {
+            try {
              if (filters !== undefined && filters !== null && filters[0].getAppliedValues().length === 1) {
                 var currFestival = filters[0].getAppliedValues()[0].value;
                 networkDiagram.renderNetWork(artistName, currFestival);
              } else {
                 networkDiagram.renderNetWork(artistName);
              }
+            } catch (err) { console.dir(err); }
         });
     });
 }
 
+//Clear the D3 Diagram whenever filter is changed
 function handleFilterEvent(filterEvent) {
-    worksheet.getUnderlyingDataAsync(getDataOptions).then(function(dataTable){
-        networkDiagram.updateNetWorkData(convertToJSON(dataTable));
-    });
-}
-
-//callback functions to respond to networkDiagram clicks
-function highlightTableauMarks(connectedTrackNames) {
-	worksheet.highlightMarksAsync("Track Name", connectedTrackNames);
-}
-
-function clearHighlightedTableauMarks() {
-	worksheet.clearHighlightedMarksAsync();
+    $('#graph').empty();
+    $('#notes').empty();
 }

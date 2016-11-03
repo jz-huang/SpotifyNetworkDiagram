@@ -1,23 +1,18 @@
 //This file contains most of the logic for the d3 viz, which is represented through an instance
 //of the NetWorkDiagram class.
-var NetworkDiagram = function(data, deltas, containerDiv, notesDiv) {
-    this.deltas = deltas;
-    //The main graph container
+var NetworkDiagram = function(data, containerDiv, notesDiv) {
 	this.graph = containerDiv;
 	this.notes = notesDiv;
     this.data = data;
-	//Visual Properties of the graph
 }
 
 NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
     $('#graph').empty();
     $('#notes').empty();
-    //console.log(artistName);
+
     var data = JSON.parse(JSON.stringify(this.data));
-    var linkField = "TODO";
-    this.linkField = linkField;
-    var linkDelta = this.deltas[linkField];
     var _this = this;
+
     // Define the dimensions of the visualization. We're using
     // a size that's convenient for displaying the graphic on
     // http://bl.ocks.org
@@ -35,7 +30,6 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
     var nodeRadius = 10;
     var selectedNodeRadius = 20;
 
-    //For Ben to play with
     var affliatedLabel = '#006699';
     var targetedLabel = '#ff8c1a';
     var nodeFill = '#94b8b8';//'#669999';
@@ -117,44 +111,8 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
             selectedNode = srcNode;
         }
     });
-    var index = 0;
-    function buildLinks(nodes, selectedNode, index) {
-        if (nodes === null || nodes === undefined || nodes.length === 0 || index > 3) {
-            return;
-        }
-        selectedNode.children = nodes.filter(function (node) {
-            var overlap = _.intersection(selectedNode.festivals, node.festivals);
-            return overlap.length > 0;
-        });
-        if (selectedNode.children.includes(selectedNode)) {
-            var dupIndex = selectedNode.children.indexOf(selectedNode);
-            selectedNode.children.splice(dupIndex, 1);
-        }
-        var leftOverNodes = nodes.filter(function (node) {
-            var overlap = _.intersection(selectedNode.festivals, node.festivals);
-            return !(overlap.length > 0);
-        });
-        selectedNode.children.forEach(function(childNode) {
-            childNode.parent = selectedNode;
-            if (childNode.affliated === true) {
-                childNode.keep = true;
-                childNode.parent.keep = true;
-                return;
-            }
-            leftOverNodes = buildLinks(leftOverNodes, childNode, index+1);
-            if (childNode.keep === true) {
-                childNode.parent.keep = true;
-            }
-        });
 
-        //prune off unwanted children
-        selectedNode.children = selectedNode.children.filter(function(child) {
-            return child.keep;
-        });
-        //selectedNode.children = selectedNode.children.slice(0, 10);
-        return leftOverNodes;
-    };
-
+    //build the links through a modified breadth first search algorithm 
     function breadthFirstBuildLinks(nodes, selectedNode, maxDepth) {
         var stack = [];
         selectedNode.depth = 0;
@@ -200,6 +158,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
         }
     }
 
+    //remove nodes that don't lead to affliates
     function removeUncessaryNodes(headNode) {
         var stack = [];
         stack.push(headNode);
@@ -218,16 +177,8 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
         }
     }
 
-    function hideImmediateConnections(headNode) {
-        headNode.children = headNode.children.filter(function(child) {
-            return !child.affliated;
-        });
-    }
-
     breadthFirstBuildLinks(data, selectedNode, 4);
     removeUncessaryNodes(selectedNode);
-    //hideImmediateConnections(selectedNode);
-    //buildLinks(data, selectedNode, 0);
 
     var filteredData = [];
     var links = [];
@@ -270,6 +221,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
             })
         }
     })
+
     // Find the graph nodes from the data set. Each
     // album is a separate node
 
@@ -288,20 +240,8 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
         node.color = hexColor;
         node.parent = filteredData.indexOf(entry.parent);
         node.festivalInfoMap = entry.festivalInfoMap;
-        //node.index = idx;
+        node.image = entry.festivalInfoMap[entry.festivals[0]].imageUrl;
 
-
-        // We'll also copy the musicians, again using
-        // a more neutral property. At the risk of
-        // some confusion, we're going to use the term
-        // "link" to refer to an individual connection
-        // between nodes, and we'll use the more
-        // mathematically correct term "edge" to refer
-        // to a line drawn between nodes on the graph.
-        // (This may be confusing because D3 refers to
-        // the latter as "links."
-
-        //node.links = entry[linkField];
         node.links = entry.festivals;
 
         // As long as we're iterating through the nodes
@@ -315,42 +255,8 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
         node.x = (width/2) + radius*Math.sin(theta);
         node.y = (height/2) + radius*Math.cos(theta);
 
-        // Return the newly created object so it can be
-        // added to the nodes array.
-
         return node;
     });
-
-    // Identify all the indivual links between nodes on
-    // the graph. As noted above, we're using the term
-    // "link" to refer to a single connection. As we'll
-    // see below, we'll call lines drawn on the graph
-    // (which may represent a combination of multiple
-    // links) "edges" in a nod to the more mathematically
-    // minded.
-
-    // var links = [];
-
-    // // Start by iterating through the albums.
-
-    // data.forEach(function(srcNode, srcIdx, srcList) {
-
-    //     // For each album, iterate through the musicians.
-
-
-    //     for (var tgtIdx = srcIdx +1; tgtIdx < srcList.length; tgtIdx++) {
-    //         var tgtNode = srcList[tgtIdx];
-    //         var targetValue = parseFloat(tgtNode[linkField]);
-    //         var srcValue = parseFloat(srcNode[linkField]);
-    //         if (Math.abs(targetValue-srcValue) < linkDelta) {
-    //             links.push({
-    //                 source: srcIdx,
-    //                 target: tgtIdx,
-    //                 link: linkField + ": " + srcNode[linkField] + "," + tgtNode[linkField]
-    //             })
-    //         }
-    //     }
-    // });
 
     // Now create the edges for our graph. We do that by
     // eliminating duplicates from the links array.
@@ -437,8 +343,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
         .style('fill', function(d, i) {
             return d.color;
         });
-    // nodeSelection.append('image')
-    //     .attr('')
+
 
     //Make the Center Node Obvious
     var selectedNode = nodeSelection.filter(function(node) {
@@ -447,7 +352,13 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
 
     selectedNode.select('circle')
         .attr('r', selectedNodeRadius)
-        .style('fill', targetedLabel);
+        .style('fill', function(node, i) {
+            if (node.affliated === true) {
+                return affliatedLabel;
+            } else {
+                return targetedLabel;
+            }
+        });
 
 
 
@@ -680,25 +591,6 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
         var worksheet = viz.getWorkbook().getActiveSheet();
         if (!selected) {
 
-            // This node wasn't selected before, so
-            // we want to select it now. That means
-            // changing the styles of some of the
-            // elements in the graph.
-
-            // First we transition the incident edges.
-
-            // node.incidentEdgeSelection
-            //     .transition()
-            //     .style('stroke', node.color);
-            // node.incidentEdgeSelection
-            //     .each( function (edge) {
-            //         var bool = (nodes[edge.source] === node && edge.target === node.parent) ||
-            //             (nodes[edge.target] === node && edge.source === node.parent);
-            //         if (bool) {
-            //             edge.transition().style('stroke', targetedLabel);
-            //         }
-            //     });
-
             // find all the nodes up till the parent
             // find the edeges that we want to change
             var currNode = node;
@@ -715,7 +607,6 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
                 connectedEdges.push(edge);
                 currNode = parentNode;
             }
-            //connectedNodes.push(parentNode);
 
             // Now we transition conencted edges
             connectedEdges.forEach(function (connectedEdge) {
@@ -729,14 +620,16 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
             connectedNodes.forEach(function (connectedNode) {
                 d3.selectAll('circle[data-node-index="' + connectedNode.index + '"]')
                     .transition()
-                    //.attr('r', selectedNodeRadius)
                     .style('fill', targetedLabel);
             });
 
-            // node.adjacentNodeSelection.selectAll('circle')
-            //     .transition()
-            //     .attr('r', nodeRadius)
-            //     .style('fill', node.color);
+            if (_this.selectEventHandler != null) {
+                var artistsOnPath = [];
+                connectedNodes.forEach(function (connectedNode) {
+                    artistsOnPath.push(connectedNode.name);
+                });
+                _this.selectEventHandler(artistsOnPath);
+            }
 
             labelSelection
                 .filter(function(label) {
@@ -746,24 +639,12 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
                             adjacent = true;
                         }
                     });
-                    // node.adjacentNodeSelection.each(function(d){
-                    //     if (label.node === d) {
-                    //         adjacent = true;
-                    //     }
-                    // })
                     return adjacent;
                 })
                 .transition()
                 .style('opacity', 1)
                 .selectAll('text')
                     .style('fill', labelFill);
-
-            // And finally, transition the node itself.
-
-            // d3.selectAll('circle[data-node-index="'+node.index+'"]')
-            //     .transition()
-            //     .attr('r', selectedNodeRadius)
-            //     .style('fill', node.color);
 
             // Make sure the node's label is visible
 
@@ -777,89 +658,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
 
             fillColor = node.text;
 
-            // connectionSelection.filter(function (connection) {
-            //     var retVal = false;
-            //     connectedEdges.forEach(function (edge) {
-            //         edge.each(function (e) {
-            //             if (connection === e) {
-            //                 retVal = true;
-            //             }
-            //         })
-            //     });
-            //     return retVal;
-            // }).classed('hidden', false)
-            //     .style('opacity', 0)
-            //     .transition()
-            //     .style('opacity', 1);
-
-            // _this.selectedNode = node;
-            // node.previousExplicitCheck = false;
-            // node.previousExplicitCheckResult = false;
-
-            // Delete the current notes section to prepare
-            // for new information.
-
-            // _this.notes.selectAll('*').remove();
-
-            // // Fill in the notes section with informationm
-            // // from the node. Because we want to transition
-            // // this to match the transitions on the graph,
-            // // we first set it's opacity to 0.
-
-            // _this.notes.style({'opacity': 0});
-
-            // // Now add the notes content.
-            // _this.notes.append('audio')
-            //         .attr('id', 'audioPreview')
-            //         .attr('src', node["Preview Url"]);
-
-            // _this.notes.append('h1').text(node["Track Name"]);
-            // _this.notes.append('h2').text("Album: " + node["Album Name"]);
-            // var imageUrl = node["Image URL"];
-            // if (imageUrl) {
-            //     _this.notes.append('div')
-            //         .on('mouseover', function() {
-            //             PlaySoundWithExplicitCheck(node);
-            //         })
-            //         .on('mouseout', StopSound)
-            //         .classed('artwork',true)
-            //         .append('a')
-            //         .append('img')
-            //             .attr('src', imageUrl)
-            //             .attr('style', "width:200px;height:200px;")
-
-            // }
-            // _this.notes.append('br');
-
-            // var list = _this.notes.append('ul').text("Artists: ");
-            // node["Artist Name"].forEach(function(link){
-            //     list.append('li')
-            //         .text(link);
-            // });
-
-            // // With the content in place, transition
-            // // the opacity to make it visible.
-
-            // _this.notes.transition().style({'opacity': 1});
-            // if (d3.event !== null & _this.selectEventHandler !== null) { //only triger this for mouse events
-            //     var adjacentTracks = [];
-            //     node.adjacentNodeSelection.each(function(node) {
-            //         adjacentTracks.push(node["Track Name"]);
-            //     })
-            //     adjacentTracks.push(node["Track Name"]);
-            //     _this.selectEventHandler(adjacentTracks);
-            // }
         } else {
-
-            // Since we're de-selecting the current
-            // node, transition the notes section
-            // and then remove it.
-
-            // _this.notes.transition()
-            //     .style({'opacity': 0})
-            //     .each('end', function(){
-            //         _this.notes.selectAll('*').remove();
-            //     });
 
             // Transition all the labels to their
             // default styles.
@@ -875,8 +674,6 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
             // position transition.
 
             fillColor = labelFill;
-
-            //_this.selectedNode = null;
 
             if (_this.deselectEventHandler != null) {
                 _this.deselectEventHandler();
@@ -1075,27 +872,6 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
     this.notes.transition().style({'opacity': 1});
 }
 
-NetworkDiagram.prototype.updateNetWorkData = function(data) {
-    $('#graph').empty();
-    $('#notes').empty();
-    this.renderNetwork(data, this.linkField);
-}
-
-NetworkDiagram.prototype.updateNetWorkLinkProperty = function(linkField) {
-    $('#graph').empty();
-    $('#notes').empty();
-    this.renderNetWork(this.data, linkField);
-}
-
-NetworkDiagram.prototype.clickNode = function(trackName) {
-    var nodes = this.nodeSelection;
-    var selectedNode = nodes.each(function(node) {
-        if (node["Track Name"] === trackName) {
-            nodes.on('click')(node);
-            return;
-        }
-    });
-}
 
 NetworkDiagram.prototype.addOnSelectEventHandler = function(eventHandler) {
     this.selectEventHandler = eventHandler;
@@ -1107,23 +883,6 @@ NetworkDiagram.prototype.addOnDeselectEventHandler = function(eventHandler) {
 
 //Utility Methods for Sound Playing
 
-function PlaySoundWithExplicitCheck(node) {
-    explicit = node['Explicit'];
-    if (explicit === 'false') {
-        PlaySound();
-    } else if (node.previousExplicitCheck === false) {
-        $('#myModal').modal('show');
-    } else if (node.previousExplicitCheckResult === true) {
-        PlaySound();
-    }
-}
-
-function setExplicitCheckResult(node, result) {
-    node.previousExplicitCheck = true;
-    node.previousExplicitCheckResult = result;
-    $('#myModal').modal('toggle');
-}
-
 function PlaySound() {
     var selectedTrack = document.getElementById("audioPreview");
     selectedTrack.play();
@@ -1134,11 +893,4 @@ function StopSound() {
     var selectedTrack = document.getElementById("audioPreview");
     selectedTrack.pause();
     selectedTrack.currentTime = 0; //reset track back to beginning
-}
-
-//generates color based on value passed in, 0 = green, 1 = red
-function getColor(value){
-    //value from 0 to 1
-    var hue=((1-value)*120).toString(10);
-    return ["hsl(",hue,",100%,50%)"].join("");
 }
