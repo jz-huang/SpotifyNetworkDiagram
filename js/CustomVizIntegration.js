@@ -11,9 +11,6 @@ function initTableauViz() {
             allowFullScreen: false,
             onFirstInteractive: function () {
                 worksheet = viz.getWorkbook().getActiveSheet();
-                //Ideally we would want an option to ignore filters when using Get Data. 
-                //This is a work around, we get the filters store them, clear filters to get the full Data-set
-                // And reply the filter afterwards
                 getDataAndConstructGraph();
                 viz.addEventListener(tableau.TableauEventName.MARKS_SELECTION, handleSelectionEvent); 
                 viz.addEventListener(tableau.TableauEventName.FILTER_CHANGE, handleFilterEvent);

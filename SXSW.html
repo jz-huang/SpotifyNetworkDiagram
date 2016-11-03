@@ -120,14 +120,31 @@
 
         <!-- Latest compiled and minified JavaScript -->
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+        <link rel="stylesheet" type="text/css" href="css/header.css">
     </head>
-
     <body onload="initTableauViz();">
-        <div class="page-header">
-            <h1>D3 Integration With Tableau</h1>
-            <h3>Spotify Playlist</h3>
+        <div id="page-header">
+            <div id="page-logo">
+                <img src="images/tableau_logo.png" style="width:60px;height:60px">
+            </div>
+            <div id="page-title">
+                <h1> Find Your Artist </h1>
+            </div>
         </div>
-
+        <div id="toolbar">
+            <div id="dropdown-container">
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Dropdown Example
+                    <span class="caret"></span></button>
+                    <ul class="dropdown-menu">
+                        <li><a href="#">HTML</a></li>
+                        <li><a href="#">CSS</a></li>
+                        <li><a href="#">JavaScript</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
         <div id="vizContainer" style="width:800px; height:600px;"></div>
         <div id="container";>
             <div id="graph" ></div>
