@@ -30,6 +30,7 @@ function getDataAndConstructGraph() {
     };
     worksheet.getUnderlyingDataAsync(getDataOptions).then(function(dataTable){
             setupFestivalFilterValues(dataTable);
+            setupSearchBox(dataTable);
             var artists = parseTableauData(dataTable);
             constructGraph(artists);
     }, function(error) {console.log(error);});
@@ -125,6 +126,15 @@ function handleSelectionEvent(selectionEvent) {
 function handleFilterEvent(filterEvent) {
     $('#graph').empty();
     $('#notes').empty();
+    getDataOptions = {
+        maxRows: 0,
+        ignoreAliases: false,
+        ignoreSelection: true,
+        includeAllColumns: true
+    };
+    worksheet.getUnderlyingDataAsync(getDataOptions).then(function(dataTable){
+            setupSearchBox(dataTable);
+    }, function(error) {console.log(error);});
 }
 
 //Toolbar setup
@@ -165,4 +175,35 @@ function setupFestivalsMenu(festivalNames) {
 
 function filterByFestival(festivalName) {
     worksheet.applyFilterAsync("Festival", festivalName, tableau.FilterUpdateType.REPLACE);
+}
+
+function setupSearchBox(dataTable) {
+    var columns = dataTable.getColumns();
+    var data = dataTable.getData();
+    var artistNames = [];
+
+    var artistColumn = columns.filter(function (column) {
+        return column.getFieldName() === "Artist Name";
+    })[0];
+    var columnIndex = artistColumn.getIndex();
+    
+    data.forEach(function(dataRow) {
+        var artistName = dataRow[columnIndex].value;
+        if (!artistNames.includes(artistName)) {
+            artistNames.push(artistName)
+        }
+    });
+    $('#artist-search-box').autocomplete({
+        source : artistNames,
+        select : function (event, ui) {
+            worksheet.selectMarksAsync("Artist Name", ui.item.label,
+                tableau.SelectionUpdateType.REPLACE);
+            console.log(ui.item.label);
+            return true;
+        }
+    });
+}
+
+function selectArtist(artistName) {
+
 }
