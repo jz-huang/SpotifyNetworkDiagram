@@ -10,7 +10,6 @@
             }
             #graph {
                 float: left;
-                position: relative;
                 padding-top: 25px;
             }
             #notes {
@@ -18,15 +17,17 @@
                 margin-left: 20px;
                 padding-top: 50px;
             }
-            h1, h2 {
+            h3, h4 {
                 margin: 0;
+                font-family: 'Helvetica Neue', Helvetica, sans-serif;
+                font-weight: 300;
             }
-            h1 {
+            h3 {
                 font-size: 1.4em;
                 margin-bottom: 0.2em;
             }
-            h2 {
-                font-size: 1.1em;
+            h4 {
+                font-size: 0.8em;
                 margin-bottom: 1em;
             }
             .artwork img {
@@ -145,17 +146,21 @@
                   </div>
                 </li>
               </ul>
-              <form class="form-inline float-xs-right">
+              <form class="form-inline" style="padding-left: 15%; float:left;">
+                  <span class="navbar-text" style="color:white">
+                    Artist Search                 
+                  </span>
+              </form>
+              <form class="form-inline" style="padding-left: 20px; float:left;">
                 <div class = "ui-widget" style="float:left">
                     <input class="form-control" type="text" placeholder="Find Your Artist" id="artist-search-box">
                 </div>
-                <button class="btn btn-outline-success" type="submit" style="float:left" onclick="selectArtist">Select</button>
               </form>
         </nav>
         <div id="vizContents">
             <div id="vizContainer" style="width: 40%; height:fill;"></div>
             <div id="container";>
-                <div id="graph" ></div>
+                <div id="graph"></div>
                 <div id="notes" style="width: 20%; height:fill;"></div>
             </div>
         </div>
