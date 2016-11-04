@@ -29,7 +29,9 @@ function getDataAndConstructGraph() {
     	includeAllColumns: true
     };
     worksheet.getUnderlyingDataAsync(getDataOptions).then(function(dataTable){
-            constructGraph(parseTableauData(dataTable));
+            setupFestivalFilterValues(dataTable);
+            var artists = parseTableauData(dataTable);
+            constructGraph(artists);
     }, function(error) {console.log(error);});
 }
 
@@ -110,17 +112,12 @@ function handleSelectionEvent(selectionEvent) {
             }
         });
 
-        //For artists that have attended multiple festivals, we want to match the sound track to the festival
-        worksheet.getFiltersAsync().then(function (filters) {
-            try {
-             if (filters !== undefined && filters !== null && filters[0].getAppliedValues().length === 1) {
-                var currFestival = filters[0].getAppliedValues()[0].value;
-                networkDiagram.renderNetWork(artistName, currFestival);
-             } else {
-                networkDiagram.renderNetWork(artistName);
-             }
-            } catch (err) { console.dir(err); }
-        });
+        var currFestival = $('#festival-filter').text();
+        if (currFestival !== 'Select A Festival') {
+            networkDiagram.renderNetWork(artistName, currFestival);
+        } else {
+            networkDiagram.renderNetWork(artistName);
+        }
     });
 }
 
@@ -128,4 +125,44 @@ function handleSelectionEvent(selectionEvent) {
 function handleFilterEvent(filterEvent) {
     $('#graph').empty();
     $('#notes').empty();
+}
+
+//Toolbar setup
+//Dynamically Set the Names of All the Festivals for Filter
+function setupFestivalFilterValues(dataTable) {
+    var columns = dataTable.getColumns();
+    var data = dataTable.getData();
+    var festivalNames = [];
+
+    var festivalColumn = columns.filter(function (column) {
+        return column.getFieldName() === "Festival";
+    })[0];
+    var columnIndex = festivalColumn.getIndex();
+    
+    data.forEach(function(dataRow) {
+        var festivalName = dataRow[columnIndex].value;
+        if (!festivalNames.includes(festivalName)) {
+            festivalNames.push(festivalName)
+        }
+    });
+    setupFestivalsMenu(festivalNames);
+}
+
+function setupFestivalsMenu(festivalNames) {
+    var festivalDropdown = $("#festival-dropdown");
+    festivalNames.forEach(function(festivalName) {
+        var festivalText = document.createTextNode(festivalName);
+        var dropdownItem = document.createElement("a");
+        dropdownItem.setAttribute("class", "dropdown-item");
+        dropdownItem.append(festivalText);
+        dropdownItem.addEventListener("click", function() {
+            filterByFestival(festivalName);
+            $('#festival-filter').text(festivalName);
+        });
+        festivalDropdown.append(dropdownItem);
+    });
+}
+
+function filterByFestival(festivalName) {
+    worksheet.applyFilterAsync("Festival", festivalName, tableau.FilterUpdateType.REPLACE);
 }

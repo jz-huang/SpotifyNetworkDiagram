@@ -13,12 +13,8 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
     var data = JSON.parse(JSON.stringify(this.data));
     var _this = this;
 
-    // Define the dimensions of the visualization. We're using
-    // a size that's convenient for displaying the graphic on
-    // http://bl.ocks.org
-
-    var width = 600,
-        height = 600;
+    var width = $('#vizContents').width()*0.4;
+    var height = $('#vizContents').height();
 
     // Visual properties of the graph are next. We need to make
     // those that are going to be animated accessible to the
@@ -848,8 +844,8 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
             .attr('id', 'audioPreview')
             .attr('src', festivalInfo.trackPreviewUrl);
 
-    this.notes.append('h1').text(selectedArtist.name);
-    this.notes.append('h2').text("Album: " + festivalInfo.trackAlbum);
+    this.notes.append('h4').text(selectedArtist.name);
+    this.notes.append('h5').text("Album: " + festivalInfo.trackAlbum);
     var imageUrl = festivalInfo.imageUrl;
     if (imageUrl) {
         this.notes.append('div')
@@ -859,7 +855,7 @@ NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
             .append('a')
             .append('img')
                 .attr('src', imageUrl)
-                .attr('style', "width:200px;height:200px;")
+                .attr('style', "width:150px;height:150px;")
 
     }
     this.notes.append('br');

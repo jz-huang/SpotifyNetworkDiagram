@@ -27,7 +27,8 @@ h1 {
 #page-logo {
 	float: left;
 	padding-left: 20px;
-	padding-right: 20px;
+	padding-right: 15px;
+	padding-top: 8px;
 }
 
 #page-title {
@@ -35,12 +36,7 @@ h1 {
 	padding: 15px;
 }
 
-#toolbar {
-	background-color: #2a5775;
-	height: 50px;
+#viz-contents {
 	width: fill;
-	position: relative;
-	clear:both;
+	height: fill;
 }
-
-.navbar-nav > li > .dropdown-menu { background-color: #FF0000; }
