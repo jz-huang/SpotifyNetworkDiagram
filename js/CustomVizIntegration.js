@@ -155,8 +155,7 @@ function setupFestivalFilterValues(dataTable) {
         festivalNames.push(festivalName);
     });
 
-    var uniqueFestivalNames = _.uniq(festivalNames);
-    setupFestivalsMenu(uniqueFestivalNames);
+    setupFestivalsMenu(_.uniq(festivalNames));
 }
 
 function setupFestivalsMenu(festivalNames) {
@@ -193,10 +192,8 @@ function setupSearchBox(dataTable) {
         artistNames.push(artistName)
     });
 
-    var uniqueArtistNames = _.uniq(artistNames)
-
     $('#artist-search-box').autocomplete({
-        source : uniqueArtistNames,
+        source : _.uniq(artistNames),
         select : function (event, ui) {
             worksheet.selectMarksAsync("Artist Name", ui.item.label,
                 tableau.SelectionUpdateType.REPLACE);
