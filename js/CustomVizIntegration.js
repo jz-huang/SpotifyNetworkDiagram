@@ -105,21 +105,26 @@ function parseTableauData(dataTable) {
 //Update the network with selected artist and current festival.
 function handleSelectionEvent(selectionEvent) {
     selectionEvent.getMarksAsync().then(function(marks) {
-        var pairs = marks[0].getPairs();
-        var artistName;
-        pairs.forEach(function(pair) {
-            if (pair.fieldName === "Artist Name") {
-                artistName = pair.value;
-            }
-        });
-
+        var artistName = getArtistName(marks);
         var currFestival = $('#festival-filter').text();
+
         if (currFestival !== 'Select A Festival') {
-            networkDiagram.renderNetWork(artistName, currFestival);
+            networkDiagram.updateArtist(artistName, currFestival);
         } else {
-            networkDiagram.renderNetWork(artistName);
+            networkDiagram.updateArtist(artistName);
         }
     });
+}
+
+function getArtistName(marks) {
+    var pairs = marks[0].getPairs();
+    var artistName;
+    pairs.forEach(function(pair) {
+        if (pair.fieldName === "Artist Name") {
+            artistName = pair.value;
+        }
+    });
+    return artistName;
 }
 
 //Clear the D3 Diagram whenever filter is changed

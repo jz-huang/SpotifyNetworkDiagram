@@ -6,7 +6,7 @@ var NetworkDiagram = function(data, containerDiv, notesDiv) {
     this.data = data;
 }
 
-NetworkDiagram.prototype.renderNetWork = function(artistName, currFestival) {
+NetworkDiagram.prototype.updateArtist = function(artistName, currFestival) {
     $('#graph').empty();
     $('#notes').empty();
 
