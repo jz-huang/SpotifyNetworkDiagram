@@ -203,7 +203,3 @@ function setupSearchBox(dataTable) {
         }
     });
 }
-
-function selectArtist(artistName) {
-
-}
