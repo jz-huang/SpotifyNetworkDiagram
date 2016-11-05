@@ -10,12 +10,16 @@
             }
             #graph {
                 float: left;
-                padding-top: 25px;
+                position: relative;
             }
             #notes {
                 float: left;
                 margin-left: 20px;
                 padding-top: 50px;
+            }
+            #graphContainer {
+                float: left;
+                padding-top: 25px;
             }
             h3, h4 {
                 margin: 0;
@@ -159,8 +163,10 @@
         </nav>
         <div id="vizContents">
             <div id="vizContainer" style="width: 40%; height:fill;"></div>
-            <div id="container";>
-                <div id="graph"></div>
+            <div id="container">
+                <div id="graphContainer">
+                    <div id="graph"></div>
+                </div>
                 <div id="notes" style="width: 20%; height:fill;"></div>
             </div>
         </div>
