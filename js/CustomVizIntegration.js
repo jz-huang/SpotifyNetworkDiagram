@@ -152,11 +152,11 @@ function setupFestivalFilterValues(dataTable) {
     
     data.forEach(function(dataRow) {
         var festivalName = dataRow[columnIndex].value;
-        if (!festivalNames.includes(festivalName)) {
-            festivalNames.push(festivalName)
-        }
+        festivalNames.push(festivalName);
     });
-    setupFestivalsMenu(festivalNames);
+
+    var uniqueFestivalNames = _.uniq(festivalNames);
+    setupFestivalsMenu(uniqueFestivalNames);
 }
 
 function setupFestivalsMenu(festivalNames) {
@@ -190,12 +190,13 @@ function setupSearchBox(dataTable) {
     
     data.forEach(function(dataRow) {
         var artistName = dataRow[columnIndex].value;
-        if (!artistNames.includes(artistName)) {
-            artistNames.push(artistName)
-        }
+        artistNames.push(artistName)
     });
+
+    var uniqueArtistNames = _.uniq(artistNames)
+
     $('#artist-search-box').autocomplete({
-        source : artistNames,
+        source : uniqueArtistNames,
         select : function (event, ui) {
             worksheet.selectMarksAsync("Artist Name", ui.item.label,
                 tableau.SelectionUpdateType.REPLACE);
