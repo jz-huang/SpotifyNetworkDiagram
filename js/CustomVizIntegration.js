@@ -108,11 +108,7 @@ function handleSelectionEvent(selectionEvent) {
         var artistName = getArtistName(marks);
         var currFestival = $('#festival-filter').text();
 
-        if (currFestival !== 'Select A Festival') {
-            networkDiagram.updateArtist(artistName, currFestival);
-        } else {
-            networkDiagram.updateArtist(artistName);
-        }
+        networkDiagram.updateArtist(artistName, currFestival);
     });
 }
 

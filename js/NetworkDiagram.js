@@ -825,7 +825,7 @@ NetworkDiagram.prototype.updateArtist = function(artistName, currFestival) {
 
     // Get Artist Info For this Festival
     var selectedArtist = selectedNode.data()[0];
-    if (currFestival === null || currFestival === undefined) {
+    if (currFestival === null || currFestival === undefined || currFestival === 'Select A Festival') {
         currFestival = selectedArtist.festivals[0];
     }
     var festivalInfo = selectedArtist.festivalInfoMap[currFestival];
