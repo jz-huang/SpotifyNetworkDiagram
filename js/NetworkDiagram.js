@@ -173,7 +173,7 @@ NetworkDiagram.prototype.updateArtist = function(artistName, currFestival) {
         }
     }
 
-    breadthFirstBuildLinks(data, selectedNode, 4);
+    breadthFirstBuildLinks(data, selectedNode, 2);
     removeUncessaryNodes(selectedNode);
 
     var filteredData = [];
