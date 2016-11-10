@@ -4,7 +4,7 @@ var initialFestival = null;
 
 function initTableauViz() {
     var containerDiv = document.getElementById("vizContainer"),
-        url = "http://jahuang2/views/SpotifyMusicFestivals/TrackAudioFeatures?:embed=y&:showShareOptions=true&:commentingEnabled=true&:display_count=no&:showVizHome=no",
+        url = "https://public.tableau.com/views/SpotifyMusicFestivals/TrackAudioFeatures?:embed=y&:display_count=yes",
         options = {
             hideTabs: true,
             hideToolbar: true,
