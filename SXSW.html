@@ -10,12 +10,16 @@
             }
             #graph {
                 float: left;
-                padding-top: 25px;
+                position: relative;
             }
             #notes {
                 float: left;
                 margin-left: 20px;
                 padding-top: 50px;
+            }
+            #graphContainer {
+                float: left;
+                padding-top: 25px;
             }
             h3, h4 {
                 margin: 0;
@@ -112,7 +116,7 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
         <script src='http://d3js.org/d3.v3.min.js'></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
-        <script type="text/javascript" src="http://jahuang2/javascripts/api/tableau-2.js"></script>
+        <script type="text/javascript" src="https://public.tableau.com/javascripts/api/tableau-2.min.js"></script>
         <script type="text/javascript" src="js/NetworkDiagram.js"></script>
         <script type="text/javascript" src="js/CustomVizIntegration.js"></script>
 
@@ -159,8 +163,10 @@
         </nav>
         <div id="vizContents">
             <div id="vizContainer" style="width: 40%; height:fill;"></div>
-            <div id="container";>
-                <div id="graph"></div>
+            <div id="container">
+                <div id="graphContainer">
+                    <div id="graph"></div>
+                </div>
                 <div id="notes" style="width: 20%; height:fill;"></div>
             </div>
         </div>

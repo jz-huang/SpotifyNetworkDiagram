@@ -4,7 +4,7 @@ var initialFestival = null;
 
 function initTableauViz() {
     var containerDiv = document.getElementById("vizContainer"),
-        url = "http://jahuang2/views/SpotifyMusicFestivals/TrackAudioFeatures?:embed=y&:showShareOptions=true&:commentingEnabled=true&:display_count=no&:showVizHome=no",
+        url = "https://public.tableau.com/views/SpotifyMusicFestivals/TrackAudioFeatures",
         options = {
             hideTabs: true,
             hideToolbar: true,
@@ -108,11 +108,7 @@ function handleSelectionEvent(selectionEvent) {
         var artistName = getArtistName(marks);
         var currFestival = $('#festival-filter').text();
 
-        if (currFestival !== 'Select A Festival') {
-            networkDiagram.updateArtist(artistName, currFestival);
-        } else {
-            networkDiagram.updateArtist(artistName);
-        }
+        networkDiagram.updateArtist(artistName, currFestival);
     });
 }
 
@@ -156,11 +152,10 @@ function setupFestivalFilterValues(dataTable) {
     
     data.forEach(function(dataRow) {
         var festivalName = dataRow[columnIndex].value;
-        if (!festivalNames.includes(festivalName)) {
-            festivalNames.push(festivalName)
-        }
+        festivalNames.push(festivalName);
     });
-    setupFestivalsMenu(festivalNames);
+
+    setupFestivalsMenu(_.uniq(festivalNames));
 }
 
 function setupFestivalsMenu(festivalNames) {
@@ -194,12 +189,11 @@ function setupSearchBox(dataTable) {
     
     data.forEach(function(dataRow) {
         var artistName = dataRow[columnIndex].value;
-        if (!artistNames.includes(artistName)) {
-            artistNames.push(artistName)
-        }
+        artistNames.push(artistName)
     });
+
     $('#artist-search-box').autocomplete({
-        source : artistNames,
+        source : _.uniq(artistNames),
         select : function (event, ui) {
             worksheet.selectMarksAsync("Artist Name", ui.item.label,
                 tableau.SelectionUpdateType.REPLACE);
