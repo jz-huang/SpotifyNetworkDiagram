@@ -123,7 +123,7 @@ function getArtistName(marks) {
     return artistName;
 }
 
-//Clear the D3 Diagram whenever filter is changed
+// Clear the D3 Diagram whenever filter is changed
 function handleFilterEvent(filterEvent) {
     $('#graph').empty();
     $('#notes').empty();
@@ -141,20 +141,8 @@ function handleFilterEvent(filterEvent) {
 //Toolbar setup
 //Dynamically Set the Names of All the Festivals for Filter
 function setupFestivalFilterValues(dataTable) {
-    var columns = dataTable.getColumns();
-    var data = dataTable.getData();
-    var festivalNames = [];
-
-    var festivalColumn = columns.filter(function (column) {
-        return column.getFieldName() === "Festival";
-    })[0];
-    var columnIndex = festivalColumn.getIndex();
-    
-    data.forEach(function(dataRow) {
-        var festivalName = dataRow[columnIndex].value;
-        festivalNames.push(festivalName);
-    });
-
+    var festivalNames = getColumnValues(dataTable, "Festival");
+    // display the festival names in the UI menu
     setupFestivalsMenu(_.uniq(festivalNames));
 }
 
@@ -178,19 +166,7 @@ function filterByFestival(festivalName) {
 }
 
 function setupSearchBox(dataTable) {
-    var columns = dataTable.getColumns();
-    var data = dataTable.getData();
-    var artistNames = [];
-
-    var artistColumn = columns.filter(function (column) {
-        return column.getFieldName() === "Artist Name";
-    })[0];
-    var columnIndex = artistColumn.getIndex();
-    
-    data.forEach(function(dataRow) {
-        var artistName = dataRow[columnIndex].value;
-        artistNames.push(artistName)
-    });
+    var artistNames = getColumnValues(dataTable, "Artist Name");
 
     $('#artist-search-box').autocomplete({
         source : _.uniq(artistNames),
@@ -201,4 +177,23 @@ function setupSearchBox(dataTable) {
             return true;
         }
     });
+}
+
+// Common util function that extracts the data values in the specified column
+function getColumnValues(dataTable, fieldName) {
+    var columns = dataTable.getColumns(); // All the column meta data in the DataTable
+    var data = dataTable.getData(); // The actual data values
+
+    // Find the specified column
+    var column = columns.find(function(column) {
+        return column.getFieldName() === fieldName;
+    });
+
+    // Get the corresponding data value from each row of data, 
+    // based on the column index.
+    var results = data.map(function(row) {
+        return row[column.getIndex()].value;
+    });
+
+    return results;
 }
