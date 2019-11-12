@@ -1,16 +1,17 @@
-// register to the event
-function listenToMarksSelection() {
-    viz.addEventListener(
-        tableau.TableauEventName.MARKS_SELECTION, 
-        onMarksSelection);
+// triggered when user hits submit from the UI
+function onSubmitComment(comment) {
+    worksheet.getSelectedMarksAsync().then((marks) => {
+        addCommentToMarks(comment, marks);
+
+        // refresh the viz to show new data
+        viz.refreshDataAsync();
+    });
 }
 
-// handle the marks selection event
-function onMarksSelection(marksEvent) {
-    // get the marks from the event
-    marksEvent.getMarksAsync().then(addCommentsToMarks);
-}
-
-function addCommentsToMarks(marks) {
-    // your custom logic for adding comments to the marks
+function addCommentToMarks(marks, comment) {
+    // iterate through each mark
+    marks.forEach((mark) => {
+        //write the mark and comment back to your database
+        yourCustomWriteFunction(mark, comment);
+    });
 }
