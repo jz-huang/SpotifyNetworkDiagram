@@ -142,12 +142,9 @@ function handleFilterEvent(filterEvent) {
 //Dynamically Set the Names of All the Festivals for Filter
 function setupFestivalFilterValues(dataTable) {
     var festivalNames = getColumnValues(dataTable, "Festival");
-    setupFestivalsMenu(_.uniq(festivalNames));
-}
 
-function setupFestivalsMenu(festivalNames) {
     var festivalDropdown = $("#festival-dropdown");
-    festivalNames.forEach(function(festivalName) {
+    _.uniq(festivalNames).forEach(function(festivalName) {
         var festivalText = document.createTextNode(festivalName);
         var dropdownItem = document.createElement("a");
         dropdownItem.setAttribute("class", "dropdown-item");
